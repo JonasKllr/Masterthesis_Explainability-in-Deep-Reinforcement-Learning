@@ -85,40 +85,40 @@ def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
     return rets
 
 
-def train(c: ConfigFile, agent_name: str):
+def train(config: ConfigFile, agent_name: str):
     """Main training loop."""
 
     # measure computation time
     start_time = time.time()
 
     # init envs
-    env: gym.Env = gym.make(c.Env.name, **c.Env.env_kwargs)
-    test_env: gym.Env = gym.make(c.Env.name, **c.Env.env_kwargs)
+    env: gym.Env = gym.make(config.Env.name, **config.Env.env_kwargs)
+    test_env: gym.Env = gym.make(config.Env.name, **config.Env.env_kwargs)
 
     # wrappers
-    for wrapper in c.Env.wrappers:
-        wrapper_kwargs = c.Env.wrapper_kwargs[wrapper]
+    for wrapper in config.Env.wrappers:
+        wrapper_kwargs = config.Env.wrapper_kwargs[wrapper]
         env: gym.Env = get_wrapper(name=wrapper, env=env, **wrapper_kwargs)
         test_env: gym.Env = get_wrapper(name=wrapper, env=test_env, **wrapper_kwargs)
 
     # get state_shape
-    if c.Env.state_type == "image":
+    if config.Env.state_type == "image":
         raise NotImplementedError("Currently, image input is not available for continuous action spaces.")
 
-    elif c.Env.state_type == "feature":
-        c.state_shape = env.observation_space.shape[0]
+    elif config.Env.state_type == "feature":
+        config.state_shape = env.observation_space.shape[0]
 
     # mode and action details
-    c.mode = "train"
-    c.num_actions = env.action_space.shape[0]
+    config.mode = "train"
+    config.num_actions = env.action_space.shape[0]
 
     # seeding
-    env.seed(c.seed)
-    test_env.seed(c.seed)
-    torch.manual_seed(c.seed)
-    torch.cuda.manual_seed(c.seed)
-    np.random.seed(c.seed)
-    random.seed(c.seed)
+    env.seed(config.seed)
+    test_env.seed(config.seed)
+    torch.manual_seed(config.seed)
+    torch.cuda.manual_seed(config.seed)
+    np.random.seed(config.seed)
+    random.seed(config.seed)
 
     if agent_name[-1].islower():
         agent_name_red = agent_name[:-2] + "Agent"
@@ -127,27 +127,27 @@ def train(c: ConfigFile, agent_name: str):
 
     # init agent
     agent_ = getattr(agents, agent_name_red)  # get agent class by name
-    agent: _Agent = agent_(c, agent_name)  # instantiate agent
+    agent: _Agent = agent_(config, agent_name)  # instantiate agent
 
     # possibly load replay buffer for continued training
-    if hasattr(c, "prior_buffer"):
-        if c.prior_buffer is not None:
-            with open(c.prior_buffer, "rb") as f:
+    if hasattr(config, "prior_buffer"):
+        if config.prior_buffer is not None:
+            with open(config.prior_buffer, "rb") as f:
                 agent.replay_buffer = pickle.load(f)
 
     # initialize logging
     agent.logger = EpochLogger(alg_str    = agent.name,
-                               seed       = c.seed,
-                               env_str    = c.Env.name,
-                               info       = c.Env.info,
-                               output_dir = c.output_dir if hasattr(c, "output_dir") else None)
+                               seed       = config.seed,
+                               env_str    = config.Env.name,
+                               info       = config.Env.info,
+                               output_dir = config.output_dir if hasattr(config, "output_dir") else None)
 
-    agent.logger.save_config({"agent_name": agent.name, **c.config_dict})
+    agent.logger.save_config({"agent_name": agent.name, **config.config_dict})
     agent.print_params(agent.n_params, case=1)
 
     # save env-file for traceability
     try:
-        entry_point = vars(gym.envs.registry[c.Env.name])["entry_point"][12:]
+        entry_point = vars(gym.envs.registry[config.Env.name])["entry_point"][12:]
         shutil.copy2(src="tud_rl/envs/_envs/" + entry_point + ".py", dst=agent.logger.output_dir)
     except:
         logger.warning(
@@ -163,17 +163,17 @@ def train(c: ConfigFile, agent_name: str):
     # get initial state
     s = env.reset()
 
-    # init epi step counter and epi return
+    # init epi step counter and epi return (epi = episode?)
     epi_steps = 0
     epi_ret = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
 
     # main loop
-    for total_steps in range(c.timesteps):
+    for total_steps in range(config.timesteps):
 
         epi_steps += 1
 
         # select action
-        if total_steps < c.act_start_step:
+        if total_steps < config.act_start_step:
             if agent.is_multi:
                 a = np.random.uniform(low=-1.0, high=1.0, size=(agent.N_agents, agent.num_actions))
             else:
@@ -185,13 +185,13 @@ def train(c: ConfigFile, agent_name: str):
                 a = agent.select_action(s)
 
         # perform step
-        if "UAM" in c.Env.name and agent.name == "LSTMRecTD3":
+        if "UAM" in config.Env.name and agent.name == "LSTMRecTD3":
             s2, r, d, _ = env.step(agent)
         else:
             s2, r, d, _ = env.step(a)
 
         # Ignore "done" if it comes from hitting the time horizon of the environment
-        d = False if epi_steps == c.Env.max_episode_steps else d
+        d = False if epi_steps == config.Env.max_episode_steps else d
 
         # add epi ret
         epi_ret += r
@@ -213,14 +213,14 @@ def train(c: ConfigFile, agent_name: str):
                 hist_len += 1
 
         # train
-        if (total_steps >= c.upd_start_step) and (total_steps % c.upd_every == 0):
+        if (total_steps >= config.upd_start_step) and (total_steps % config.upd_every == 0):
             agent.train()
 
         # s becomes s2
         s = s2
 
         # end of episode handling
-        if d or (epi_steps == c.Env.max_episode_steps):
+        if d or (epi_steps == config.Env.max_episode_steps):
 
             # reset noise after episode
             if hasattr(agent, "noise"):
@@ -247,12 +247,12 @@ def train(c: ConfigFile, agent_name: str):
             epi_ret = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
 
         # end of epoch handling
-        if (total_steps + 1) % c.epoch_length == 0 and (total_steps + 1) > c.upd_start_step:
+        if (total_steps + 1) % config.epoch_length == 0 and (total_steps + 1) > config.upd_start_step:
 
-            epoch = (total_steps + 1) // c.epoch_length
+            epoch = (total_steps + 1) // config.epoch_length
 
             # evaluate agent with deterministic policy
-            eval_ret = evaluate_policy(test_env=test_env, agent=agent, c=c)
+            eval_ret = evaluate_policy(test_env=test_env, agent=agent, c=config)
 
             if agent.is_multi:
                 for ret_list in eval_ret:
@@ -292,8 +292,8 @@ def train(c: ConfigFile, agent_name: str):
             # create evaluation plot based on current 'progress.txt'
             plot_from_progress(dir     = agent.logger.output_dir,
                                alg     = agent.name,
-                               env_str = c.Env.name,
-                               info    = c.Env.info)
+                               env_str = config.Env.name,
+                               info    = config.Env.info)
             # save weights
             save_weights(agent, eval_ret)
 
