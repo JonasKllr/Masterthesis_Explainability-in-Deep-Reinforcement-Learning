@@ -1,6 +1,3 @@
-from argparse import ArgumentParser
-
-import tud_rl.envs
 import tud_rl.run.train_continuous as cont
 import tud_rl.run.train_discrete as discr
 import tud_rl.run.visualize_continuous as vizcont
@@ -12,9 +9,9 @@ from tud_rl.configs.discrete_actions import __path__ as discr_path
 
 # arguments
 task = 'train' # train / viz
-config_file = 'mountaincar.yaml'
+config_file = 'complex_oa_mdp.yaml'
 # seed = 
-agent_name = 'DQN'
+agent_name = 'DDPG'
 # dqn_wights = 
 # actor_weights =
 # critic_weigths =
