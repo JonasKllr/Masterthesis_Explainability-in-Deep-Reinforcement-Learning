@@ -161,66 +161,66 @@ def train(config: ConfigFile, agent_name: str):
         hist_len = 0
 
     # get initial state
-    s = env.reset()
+    state = env.reset()
 
-    # init epi step counter and epi return (epi = episode?)
-    epi_steps = 0
-    epi_ret = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
+    # init episode step counter and episode return
+    episode_steps = 0
+    episode_return = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
 
     # main loop
     for total_steps in range(config.timesteps):
 
-        epi_steps += 1
+        episode_steps += 1
 
         # select action
         if total_steps < config.act_start_step:
             if agent.is_multi:
-                a = np.random.uniform(low=-1.0, high=1.0, size=(agent.N_agents, agent.num_actions))
+                action = np.random.uniform(low=-1.0, high=1.0, size=(agent.N_agents, agent.num_actions))
             else:
-                a = np.random.uniform(low=-1.0, high=1.0, size=agent.num_actions)
+                action = np.random.uniform(low=-1.0, high=1.0, size=agent.num_actions)
         else:
             if agent.needs_history:
-                a = agent.select_action(s=s, s_hist=s_hist, a_hist=a_hist, hist_len=hist_len)
+                action = agent.select_action(s=state, s_hist=s_hist, a_hist=a_hist, hist_len=hist_len)
             else:
-                a = agent.select_action(s)
+                action = agent.select_action(state)
 
         # perform step
         if "UAM" in config.Env.name and agent.name == "LSTMRecTD3":
-            s2, r, d, _ = env.step(agent)
+            state_2, reward, done, _ = env.step(agent)
         else:
-            s2, r, d, _ = env.step(a)
+            state_2, reward, done, _ = env.step(action)
 
         # Ignore "done" if it comes from hitting the time horizon of the environment
-        d = False if epi_steps == config.Env.max_episode_steps else d
+        done = False if episode_steps == config.Env.max_episode_steps else done
 
-        # add epi ret
-        epi_ret += r
+        # add episode return
+        episode_return += reward
 
         # memorize
-        agent.memorize(s, a, r, s2, d)
+        agent.memorize(state, action, reward, state_2, done)
 
         # LSTM: update history
         if agent.needs_history:
             if hist_len == agent.history_length:
                 s_hist = np.roll(s_hist, shift=-1, axis=0)
-                s_hist[agent.history_length - 1, :] = s
+                s_hist[agent.history_length - 1, :] = state
 
                 a_hist = np.roll(a_hist, shift=-1, axis=0)
-                a_hist[agent.history_length - 1, :] = a
+                a_hist[agent.history_length - 1, :] = action
             else:
-                s_hist[hist_len] = s
-                a_hist[hist_len] = a
+                s_hist[hist_len] = state
+                a_hist[hist_len] = action
                 hist_len += 1
 
         # train
         if (total_steps >= config.upd_start_step) and (total_steps % config.upd_every == 0):
             agent.train()
 
-        # s becomes s2
-        s = s2
+        # state becomes state_2
+        state = state_2
 
         # end of episode handling
-        if d or (epi_steps == config.Env.max_episode_steps):
+        if done or (episode_steps == config.Env.max_episode_steps):
 
             # reset noise after episode
             if hasattr(agent, "noise"):
@@ -233,18 +233,18 @@ def train(config: ConfigFile, agent_name: str):
                 hist_len = 0
 
             # reset to initial state
-            s = env.reset()
+            state = env.reset()
 
             # log episode return
             if agent.is_multi:
                 for i in range(agent.N_agents):
-                    agent.logger.store(**{f"Epi_Ret_{i}" : epi_ret[i].item()})
+                    agent.logger.store(**{f"Epi_Ret_{i}" : episode_return[i].item()})
             else:
-                agent.logger.store(Epi_Ret=epi_ret)
+                agent.logger.store(Epi_Ret=episode_return)
 
-            # reset epi steps and epi ret
-            epi_steps = 0
-            epi_ret = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
+            # reset episode steps and episode return
+            episode_steps = 0
+            episode_return = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
 
         # end of epoch handling
         if (total_steps + 1) % config.epoch_length == 0 and (total_steps + 1) > config.upd_start_step:
