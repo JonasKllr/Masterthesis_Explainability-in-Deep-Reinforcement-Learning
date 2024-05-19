@@ -286,47 +286,49 @@ class ComplexOA(gym.Env):
 
         ############## CARTEESIAN STATE INPUT ###############
 
-        #  # state definition
-        # self.state = np.array([self.agent_ay/self.ay_max, self.agent_vy/self.vy_max])
-        # self.state = np.append(self.state, (self.agent_x  - x)/self.delta_x_max)
-        # self.state = np.append(self.state, (self.agent_y  - y)/self.delta_y_max)
+         # state definition
+        self.state = np.array([self.agent_ay/self.ay_max, self.agent_vy/self.vy_max])
+        self.state = np.append(self.state, (self.agent_x  - x)/self.delta_x_max)
+        self.state = np.append(self.state, (self.agent_y  - y)/self.delta_y_max)
 
-        # # POMDP specs
-        # if self.POMDP_type in ["MDP", "FL"]:
-        #     v_obs = (self.agent_vx - vx)/(2*self.vx_max)
-        #     v_obs = np.append(v_obs, (self.agent_vy - vy)/(2*self.vy_max))
+        # POMDP specs
+        if self.POMDP_type in ["MDP", "FL"]:
+            velocity_obstacles = (self.agent_vx - vx)/(2*self.vx_max)
+            velocity_obstacles = np.append(velocity_obstacles, (self.agent_vy - vy)/(2*self.vy_max))
                               
-        #     self.state = np.append(self.state, v_obs)
+            self.state = np.append(self.state, velocity_obstacles)
 
-        # if self.POMDP_type == "FL" and np.random.binomial(1, self.FL_prob) == 1:
-        #     self.state = np.zeros_like(self.state)
+        if self.POMDP_type == "FL" and np.random.binomial(1, self.FL_prob) == 1:
+            self.state = np.zeros_like(self.state)
 
 
         ############## POLAR STATE INPUT ###############
         
-        agent_beta = np.arctan2(self.agent_vy,self.agent_vx)        # sideslip of agent
-        agent_U = np.sqrt(self.agent_vx**2 + self.agent_vy**2)      # absolute speed of agent
+        # agent_beta = np.arctan2(self.agent_vy,self.agent_vx)        # sideslip of agent
+        # agent_U = np.sqrt(self.agent_vx**2 + self.agent_vy**2)      # absolute speed of agent
 
-        C_T =  np.arctan2(vy,vx) - agent_beta                          # intersection angle
-        U_TS = np.sqrt(vx**2 + vy**2)                                  # absolute speed of obstacles
+        # C_T =  np.arctan2(vy,vx) - agent_beta                          # intersection angle
+        # U_TS = np.sqrt(vx**2 + vy**2)                                  # absolute speed of obstacles
         
-        theta = np.arctan2(y-self.agent_y, x-self.agent_x) - agent_beta    # direction of obstacle position in agent's body frame
+        # theta = np.arctan2(y-self.agent_y, x-self.agent_x) - agent_beta    # direction of obstacle position in agent's body frame
 
-        # state definition
-        self.state = np.array([self.agent_ay/self.ay_max,
-                               agent_beta/np.pi,
-                               agent_U/self.u_scale])
-        self.state = np.append(self.state, eucl_dist/self.R_scale)
-        self.state = np.append(self.state,  theta/np.pi)
+        # # state definition
+        # self.state = np.array([self.agent_ay/self.ay_max,
+        #                        agent_beta/np.pi,
+        #                        agent_U/self.u_scale])
+        # self.state = np.append(self.state, eucl_dist/self.R_scale)
+        # self.state = np.append(self.state,  theta/np.pi)
 
-        # POMDP specs
-        if self.POMDP_type in ["MDP", "FL"]:
-            v_obs = np.array([U_TS/self.u_scale,
-                              C_T/np.pi])
-            self.state = np.append(self.state, v_obs)
+        # # POMDP specs
+        # if self.POMDP_type in ["MDP", "FL"]:
+        #     velocity_obstacles = np.array([U_TS/self.u_scale,
+        #                       C_T/np.pi])
+        #     self.state = np.append(self.state, velocity_obstacles)
 
-        if self.POMDP_type == "FL" and np.random.binomial(1, self.FL_prob) == 1:
-            self.state = np.zeros_like(self.state)
+        # if self.POMDP_type == "FL" and np.random.binomial(1, self.FL_prob) == 1:
+        #     self.state = np.zeros_like(self.state)
+
+        ############## END POLAR STATE INPUT ###############
 
         # frame stacking
         if self.frame_stack > 1:
