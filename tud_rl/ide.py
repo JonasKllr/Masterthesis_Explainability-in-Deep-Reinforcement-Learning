@@ -18,13 +18,13 @@ from tud_rl.configs.discrete_actions import __path__ as discr_path
 # ---------------- User Settings -----------------------------
 # ------------------------------------------------------------
 
-TASK        = "train"           # ["train", "viz"]
-CONFIG_FILE = "breakout.yaml"     # configuration file as `.yaml` or `.json`
+TASK        = "viz"           # ["train", "viz"]
+CONFIG_FILE = "complex_oa_mdp.yaml"     # configuration file as `.yaml` or `.json`
 SEED        = 42                # set a seed different to the one specified in your config
-AGENT_NAME  = "DQN"             # agent to train/viz
+AGENT_NAME  = "DDPG"             # agent to train/viz
 DQN_WEIGHTS = None              # path to file for weight initialization (discrete actions)
-ACTOR_WEIGHTS = None             # path to file for weight initialization (continuous actions)
-CRITIC_WEIGHTS = None           # path to file for weight initialization (continuous actions)
+ACTOR_WEIGHTS = '/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_ComplexOA-v0_MDP_2024-05-17_12_archive/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
+CRITIC_WEIGHTS = '/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_ComplexOA-v0_MDP_2024-05-17_12_archive/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
 
 # ------------------------------------------------------------
 # ------------------------------------------------------------
