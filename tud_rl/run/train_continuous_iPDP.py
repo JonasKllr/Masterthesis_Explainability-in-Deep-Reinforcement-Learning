@@ -233,7 +233,7 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
         
         incremental_explainer.explain_one(state_iPDP)
 
-        if total_steps % plot_frequency_iPDP == 0:
+        if total_steps != 0 and total_steps % plot_frequency_iPDP == 0:
             fig, axes = incremental_explainer.plot_pdp(
                 title=f"iPDP after {total_steps} samples",
                 show_pdp_transition=True,
