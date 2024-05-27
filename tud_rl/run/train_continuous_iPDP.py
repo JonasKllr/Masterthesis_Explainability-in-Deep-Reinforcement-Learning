@@ -178,6 +178,7 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
     # init iPDP objects
 
     feature_order = np.arange(start=0, stop=np.shape(state)[0])
+    feature_order = feature_order.tolist()
     grid_size = 10
     feature_of_interest = 0
 
