@@ -30,8 +30,7 @@ class ActionSelectionWrapper(Wrapper):
         """
         
         x_input = self.convert_1d_input_to_arr(x)
-        x_input = torch.tensor(x_input, device=self._device, dtype=torch.float32)
-        output = self._prediction_function(x_input).detach().cpu().numpy()
+        output = self._prediction_function(x_input)
         return self.convert_arr_output_to_dict(output)
         
 
