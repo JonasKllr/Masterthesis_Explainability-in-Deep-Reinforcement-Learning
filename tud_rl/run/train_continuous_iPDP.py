@@ -21,6 +21,7 @@ from tud_rl.common.configparser import ConfigFile
 from tud_rl.common.logging_func import EpochLogger
 from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
+from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapper
 
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
@@ -141,23 +142,23 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
                 agent.replay_buffer = pickle.load(f)
 
     # initialize logging
-    # agent.logger = EpochLogger(alg_str    = agent.name,
-    #                            seed       = config.seed,
-    #                            env_str    = config.Env.name,
-    #                            info       = config.Env.info,
-    #                            output_dir = config.output_dir if hasattr(config, "output_dir") else None)
+    agent.logger = EpochLogger(alg_str    = agent.name,
+                               seed       = config.seed,
+                               env_str    = config.Env.name,
+                               info       = config.Env.info,
+                               output_dir = config.output_dir if hasattr(config, "output_dir") else None)
 
-    # agent.logger.save_config({"agent_name": agent.name, **config.config_dict})
+    agent.logger.save_config({"agent_name": agent.name, **config.config_dict})
     agent.print_params(agent.n_params, case=1)
 
     # save env-file for traceability
-    # try:
-    #     entry_point = vars(gym.envs.registry[config.Env.name])["entry_point"][12:]
-    #     shutil.copy2(src="tud_rl/envs/_envs/" + entry_point + ".py", dst=agent.logger.output_dir)
-    # except:
-    #     logger.warning(
-    #         f"Could not find the env file. Make sure that the file name matches the class name. Skipping..."
-    #     )
+    try:
+        entry_point = vars(gym.envs.registry[config.Env.name])["entry_point"][12:]
+        shutil.copy2(src="tud_rl/envs/_envs/" + entry_point + ".py", dst=agent.logger.output_dir)
+    except:
+        logger.warning(
+            f"Could not find the env file. Make sure that the file name matches the class name. Skipping..."
+        )
 
     # LSTM: init history
     if agent.needs_history:
@@ -180,6 +181,10 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
     grid_size = 10
     feature_of_interest = 0
 
+    #TODO agent.select_action() return type AND argument type dict!!
+    model_function = ActionSelectionWrapper(agent.select_action)
+
+
     if compute_iPDP is True:
         storage = OrderedReservoirStorage(
             store_targets=False,
@@ -188,7 +193,7 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
         )
 
         incremental_explainer = IncrementalPDP(
-            model_function=agent.select_action,
+            model_function=model_function,
             feature_names=feature_order,
             gridsize=grid_size,
             dynamic_setting=True,
@@ -196,9 +201,10 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
             pdp_feature=feature_of_interest,
             storage=storage,
             storage_size=10,
-            output_key=1,
-            pdp_history_interval=2000,
-            pdp_history_size=25
+            output_key='output',
+            pdp_history_interval=1000,
+            pdp_history_size=10,
+            min_max_grid=True
         )
     
         params = {
@@ -216,20 +222,34 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
     for total_steps in range(config.timesteps):
 
         episode_steps += 1
+        print(total_steps)
 
 
         #------------- iPDP ----------------------------------------------------
 
-        incremental_explainer.explain_one(state)
+        # convert state to type dict
+        state_iPDP = dict(enumerate(state))
+        
+        incremental_explainer.explain_one(state_iPDP)
 
         if total_steps % plot_frequency_iPDP == 0:
             fig, axes = incremental_explainer.plot_pdp(
-                title=f"elec2 after {total_steps} samples", show_pdp_transition=True,
+                title=f"iPDP after {total_steps} samples",
+                show_pdp_transition=True,
                 show_ice_curves=False,
                 y_min=-1.0, y_max=1.0,  #TODO make dependable on. Even necessary?
                 x_min=0, x_max=1,
                 return_plot=True,
-                n_decimals=4
+                n_decimals=4,
+                x_transform=None, y_transform=None,
+                batch_pdp=None,
+                y_scale=None,
+                y_label='Model Output',
+                figsize=None,
+                mean_centered_pd=False,
+                xticks=None,
+                xticklabels=None,
+                show_legend=False
             )
             plt.savefig(os.path.join("/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/change_detection_plots", f"{total_steps}.pdf"))
             # plt.show()
@@ -352,15 +372,19 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
                 agent.logger.log_tabular("Critic_CurFE", with_min_and_max=False)
                 agent.logger.log_tabular("Critic_ExtMemory", with_min_and_max=False)
 
-            # agent.logger.dump_tabular()
+            agent.logger.dump_tabular()
 
             # create evaluation plot based on current 'progress.txt'
-            # plot_from_progress(dir     = agent.logger.output_dir,
-            #                    alg     = agent.name,
-            #                    env_str = config.Env.name,
-            #                    info    = config.Env.info)
+            plot_from_progress(dir     = agent.logger.output_dir,
+                               alg     = agent.name,
+                               env_str = config.Env.name,
+                               info    = config.Env.info)
             # save weights
-            # save_weights(agent, eval_ret)
+            save_weights(agent, eval_ret)
+
+# def convert_agent_output_to_dict(fn_action_selection):
+
+
 
 
 def save_weights(agent: _Agent, eval_ret) -> None:
