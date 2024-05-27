@@ -189,8 +189,8 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
     if compute_iPDP is True:
         storage = OrderedReservoirStorage(
             store_targets=False,
-            size=500,
-            # constant_probability=0.05
+            size=100,
+            constant_probability=1.
         )
 
         incremental_explainer = IncrementalPDP(
@@ -205,7 +205,7 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
             output_key='output',
             pdp_history_interval=1000,
             pdp_history_size=10,
-            min_max_grid=True
+            min_max_grid=True   # True: absolute min max values, False: quantiles
         )
     
         params = {
@@ -250,7 +250,7 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
                 mean_centered_pd=False,
                 xticks=None,
                 xticklabels=None,
-                show_legend=False
+                show_legend=True
             )
             plt.savefig(os.path.join("/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/change_detection_plots", f"{total_steps}.pdf"))
             # plt.show()
