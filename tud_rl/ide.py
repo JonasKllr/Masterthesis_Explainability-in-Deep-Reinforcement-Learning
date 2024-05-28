@@ -1,10 +1,10 @@
-
 """
 Main script for running the tud_rl package 
 from inside an editor/IDE.
 Basically the same as __main__.py but 
 without the argument parser. 
 """
+
 import tud_rl.envs
 import tud_rl.run.train_continuous as cont
 import tud_rl.run.train_continuous_iPDP as cont_iPDP
@@ -19,19 +19,18 @@ from tud_rl.configs.discrete_actions import __path__ as discr_path
 # ---------------- User Settings -----------------------------
 # ------------------------------------------------------------
 
-TASK        = "train"           # ["train", "viz"]
-CONFIG_FILE = "ski_mdp.yaml"     # configuration file as `.yaml` or `.json`
-SEED        = 42                # set a seed different to the one specified in your config
-AGENT_NAME  = "DDPG"             # agent to train/viz
-DQN_WEIGHTS = None              # path to file for weight initialization (discrete actions)
-ACTOR_WEIGHTS = None #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_Ski-v0_MDP_2024-05-23_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
-CRITIC_WEIGHTS = None #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_Ski-v0_MDP_2024-05-23_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
+TASK = "train"  # ["train", "viz"]
+CONFIG_FILE = "ski_mdp.yaml"  # configuration file as `.yaml` or `.json`
+SEED = 42  # set a seed different to the one specified in your config
+AGENT_NAME = "DDPG"  # agent to train/viz
+DQN_WEIGHTS = None  # path to file for weight initialization (discrete actions)
+ACTOR_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_Ski-v0_MDP_2024-05-23_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
+CRITIC_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_Ski-v0_MDP_2024-05-23_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
 
 # ---------------- iPDP Settings -----------------------------
 
 COMPUTE_iPDP = True
 PLOT_FREQUENCY_iPDP = 5000
-
 
 
 # ------------------------------------------------------------
@@ -70,7 +69,12 @@ config.max_episode_handler()
 
 if TASK == "train":
     if COMPUTE_iPDP == True:
-        cont_iPDP.train(config=config, agent_name=AGENT_NAME, compute_iPDP=COMPUTE_iPDP, plot_frequency_iPDP= PLOT_FREQUENCY_iPDP)
+        cont_iPDP.train(
+            config=config,
+            agent_name=AGENT_NAME,
+            compute_iPDP=COMPUTE_iPDP,
+            plot_frequency_iPDP=PLOT_FREQUENCY_iPDP,
+        )
     else:
         if discrete:
             discr.train(config, AGENT_NAME)
