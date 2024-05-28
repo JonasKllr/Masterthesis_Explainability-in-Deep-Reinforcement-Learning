@@ -23,6 +23,8 @@ from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
 from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapper
 
+from tud_rl.iPDP_helper.validate_action_selection_wrapper import vaildate_action_selection_wrapper
+
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
 
@@ -175,16 +177,16 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
 
 
     
-    # init iPDP objects
+    # ----------------------------- init iPDP objects --------------------------------
+    agent.mode = "test"
 
     feature_order = np.arange(start=0, stop=np.shape(state)[0])
     feature_order = feature_order.tolist()
     grid_size = 10
-    feature_of_interest = 0
+    feature_of_interest = 3
 
-    #TODO agent.select_action() return type AND argument type dict!!
+    # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict (needed for iPDP methods)
     model_function = ActionSelectionWrapper(agent.select_action)
-
 
     if compute_iPDP is True:
         storage = OrderedReservoirStorage(
@@ -219,6 +221,13 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
 
         plt.rcParams.update(params)
 
+        # for validation
+        output_agent_array = []
+        output_wrapper_array = []
+
+        agent.mode = "train"
+    # ----------------------------- init iPDP objects --------------------------------
+
     # main loop
     for total_steps in range(config.timesteps):
 
@@ -227,10 +236,16 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
 
 
         #------------- iPDP ----------------------------------------------------
-
+        agent.mode = "test"
         # convert state to type dict
         state_iPDP = dict(enumerate(state))
-        
+
+        # for validation
+        if total_steps > config.act_start_step:
+            output_agent, output_wrapper = vaildate_action_selection_wrapper(agent, incremental_explainer, state, state_iPDP)
+            output_agent_array.append(output_agent)
+            output_wrapper_array.append(output_wrapper)
+
         incremental_explainer.explain_one(state_iPDP)
 
         if total_steps != 0 and total_steps % plot_frequency_iPDP == 0:
@@ -255,6 +270,7 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
             plt.savefig(os.path.join("/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/change_detection_plots", f"{total_steps}.pdf"))
             # plt.show()
         
+        agent.mode = "train"
         #------------- iPDP ----------------------------------------------------
         
 
