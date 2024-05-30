@@ -23,7 +23,9 @@ from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
 from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapper
 
-from tud_rl.iPDP_helper.validate_action_selection_wrapper import vaildate_action_selection_wrapper
+from tud_rl.iPDP_helper.validate_action_selection_wrapper import (
+    vaildate_action_selection_wrapper,
+)
 
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
@@ -54,7 +56,9 @@ def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
 
             # select action
             if agent.needs_history:
-                a = agent.select_action(s=s, s_hist=s_hist, a_hist=a_hist, hist_len=hist_len)
+                a = agent.select_action(
+                    s=s, s_hist=s_hist, a_hist=a_hist, hist_len=hist_len
+                )
             else:
                 a = agent.select_action(s)
 
@@ -93,7 +97,9 @@ def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
     return rets
 
 
-def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequency_iPDP: int):
+def train(
+    config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequency_iPDP: int
+):
     """Main training loop."""
 
     # measure computation time
@@ -111,7 +117,9 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
 
     # get state_shape
     if config.Env.state_type == "image":
-        raise NotImplementedError("Currently, image input is not available for continuous action spaces.")
+        raise NotImplementedError(
+            "Currently, image input is not available for continuous action spaces."
+        )
 
     elif config.Env.state_type == "feature":
         config.state_shape = env.observation_space.shape[0]
@@ -144,11 +152,13 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
                 agent.replay_buffer = pickle.load(f)
 
     # initialize logging
-    agent.logger = EpochLogger(alg_str    = agent.name,
-                               seed       = config.seed,
-                               env_str    = config.Env.name,
-                               info       = config.Env.info,
-                               output_dir = config.output_dir if hasattr(config, "output_dir") else None)
+    agent.logger = EpochLogger(
+        alg_str=agent.name,
+        seed=config.seed,
+        env_str=config.Env.name,
+        info=config.Env.info,
+        output_dir=config.output_dir if hasattr(config, "output_dir") else None,
+    )
 
     agent.logger.save_config({"agent_name": agent.name, **config.config_dict})
     agent.print_params(agent.n_params, case=1)
@@ -156,7 +166,9 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
     # save env-file for traceability
     try:
         entry_point = vars(gym.envs.registry[config.Env.name])["entry_point"][12:]
-        shutil.copy2(src="tud_rl/envs/_envs/" + entry_point + ".py", dst=agent.logger.output_dir)
+        shutil.copy2(
+            src="tud_rl/envs/_envs/" + entry_point + ".py", dst=agent.logger.output_dir
+        )
     except:
         logger.warning(
             f"Could not find the env file. Make sure that the file name matches the class name. Skipping..."
@@ -175,8 +187,6 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
     episode_steps = 0
     episode_return = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
 
-
-    
     # ----------------------------- init iPDP objects --------------------------------
     agent.mode = "test"
 
@@ -190,33 +200,33 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
 
     if compute_iPDP is True:
         storage = OrderedReservoirStorage(
-            store_targets=False, # False: store only feature values (x axis). True: store feature values and function output. default: False(function output not needed for iPDP)
+            store_targets=False,  # False: store only feature values (x axis). True: store feature values and function output. default: False(function output not needed for iPDP)
             size=100,
-            constant_probability=1. # probability of adding a new value to the storage if amount of values in the storage equals size (reservior storage)
+            constant_probability=1.0,  # probability of adding a new value to the storage if amount of values in the storage equals size (reservior storage)
         )
 
         incremental_explainer = IncrementalPDP(
-            model_function=model_function,  # wrapped agent.select_action() 
-            feature_names=feature_order, # all features in state representation
-            gridsize=grid_size, # number of grid points the function is evaluated at (points on x axis)
-            dynamic_setting=True, # True for exponential everage iPDP
-            smoothing_alpha=0.001, # smoothing parameter controlling time-sensitivity iPDP (0 < alpha < 1)
-            pdp_feature=feature_of_interest, # feature of interest the iPDP is computed for
-            storage=storage, # storage object for feature values. (for iPDP use OrderedReservoirStorage or others?!)
-            storage_size=10, # NO INFLUENCE ON STORAGE OBJECT. 1. meaning: storage size+waiting_period amount of consecutive ICE curves are stored. If full, old ones are deleted. (2. meaning: used for blending in plots. older ICEs get a higher blending value, newer ones are more opaque). storage only for plotting.
-            output_key='output', # basically irrelevant. needs to match self.default_label in base Wrapper Class
-            pdp_history_interval=1000, # timestep frequency of storing iPDPs. if storage is full, old old ones get deleted. storage only for plotting
-            pdp_history_size=10, # pdp storage size. amount of iPDPs stored for plotting
-            min_max_grid=True   # True: absolute min max feature values (x axis), False: quantiles
+            model_function=model_function,  # wrapped agent.select_action()
+            feature_names=feature_order,  # all features in state representation
+            gridsize=grid_size,  # number of grid points the function is evaluated at (points on x axis)
+            dynamic_setting=True,  # True for exponential everage iPDP
+            smoothing_alpha=0.001,  # smoothing parameter controlling time-sensitivity iPDP (0 < alpha < 1)
+            pdp_feature=feature_of_interest,  # feature of interest the iPDP is computed for
+            storage=storage,  # storage object for feature values. (for iPDP use OrderedReservoirStorage or others?!)
+            storage_size=10,  # NO INFLUENCE ON STORAGE OBJECT. 1. meaning: storage size+waiting_period amount of consecutive ICE curves are stored. If full, old ones are deleted. (2. meaning: used for blending in plots. older ICEs get a higher blending value, newer ones are more opaque). storage only for plotting.
+            output_key="output",  # basically irrelevant. needs to match self.default_label in base Wrapper Class
+            pdp_history_interval=1000,  # timestep frequency of storing iPDPs. if storage is full, old old ones get deleted. storage only for plotting
+            pdp_history_size=10,  # pdp storage size. amount of iPDPs stored for plotting
+            min_max_grid=True,  # True: absolute min max feature values (x axis), False: quantiles
         )
-    
+
         params = {
-        'legend.fontsize': 'xx-large',
-        'figure.figsize': (7, 7),
-        'axes.labelsize': 'xx-large',
-        'axes.titlesize': 'xx-large',
-        'xtick.labelsize': 'x-large',
-        'ytick.labelsize': 'x-large'
+            "legend.fontsize": "xx-large",
+            "figure.figsize": (7, 7),
+            "axes.labelsize": "xx-large",
+            "axes.titlesize": "xx-large",
+            "xtick.labelsize": "x-large",
+            "ytick.labelsize": "x-large",
         }
 
         plt.rcParams.update(params)
@@ -234,8 +244,7 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
         episode_steps += 1
         print(total_steps)
 
-
-        #------------- iPDP ----------------------------------------------------
+        # ------------- iPDP ----------------------------------------------------
         agent.mode = "test"
         # convert state to type dict
         state_iPDP = dict(enumerate(state))
@@ -250,39 +259,50 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
 
         if total_steps != 0 and total_steps % plot_frequency_iPDP == 0:
             fig, axes = incremental_explainer.plot_pdp(
-                title=f"iPDP after {total_steps} samples", # title showing on the plots
-                show_pdp_transition=True, # True: plot iPDPs in PDP storage. default: True
-                show_ice_curves=False, # True: plot ICE curves in ICE storage (with blending). default: True
-                y_min=-1.0, y_max=1.0,  #TODO make dependable on. Even necessary?
-                x_min=0, x_max=1, # x/y min/max values for boundaries in plots
-                return_plot=True, # return values for fig, axes ?!
-                n_decimals=4, # ?? weird usage
-                x_transform=None, y_transform=None, # ??
-                batch_pdp=None, # for plotting the normal PDP??
-                y_scale=None, # for y axis in plot
-                y_label='Model Output',
+                title=f"iPDP after {total_steps} samples",  # title showing on the plots
+                show_pdp_transition=True,  # True: plot iPDPs in PDP storage. default: True
+                show_ice_curves=False,  # True: plot ICE curves in ICE storage (with blending). default: True
+                y_min=-1.0,
+                y_max=1.0,  # TODO make dependable on. Even necessary?
+                x_min=0,
+                x_max=1,  # x/y min/max values for boundaries in plots
+                return_plot=True,  # return values for fig, axes ?!
+                n_decimals=4,  # ?? weird usage
+                x_transform=None,
+                y_transform=None,  # ??
+                batch_pdp=None,  # for plotting the normal PDP??
+                y_scale=None,  # for y axis in plot
+                y_label="Model Output",
                 figsize=None,
                 mean_centered_pd=False,
                 xticks=None,
                 xticklabels=None,
-                show_legend=True
+                show_legend=True,
             )
-            plt.savefig(os.path.join("/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/change_detection_plots", f"{total_steps}.pdf"))
+            plt.savefig(
+                os.path.join(
+                    "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/change_detection_plots",
+                    f"{total_steps}.pdf",
+                )
+            )
             # plt.show()
-        
+
         agent.mode = "train"
-        #------------- iPDP ----------------------------------------------------
-        
+        # ------------- iPDP ----------------------------------------------------
 
         # select action
         if total_steps < config.act_start_step:
             if agent.is_multi:
-                action = np.random.uniform(low=-1.0, high=1.0, size=(agent.N_agents, agent.num_actions))
+                action = np.random.uniform(
+                    low=-1.0, high=1.0, size=(agent.N_agents, agent.num_actions)
+                )
             else:
                 action = np.random.uniform(low=-1.0, high=1.0, size=agent.num_actions)
         else:
             if agent.needs_history:
-                action = agent.select_action(s=state, s_hist=s_hist, a_hist=a_hist, hist_len=hist_len)
+                action = agent.select_action(
+                    s=state, s_hist=s_hist, a_hist=a_hist, hist_len=hist_len
+                )
             else:
                 action = agent.select_action(state)
 
@@ -315,7 +335,9 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
                 hist_len += 1
 
         # train
-        if (total_steps >= config.upd_start_step) and (total_steps % config.upd_every == 0):
+        if (total_steps >= config.upd_start_step) and (
+            total_steps % config.upd_every == 0
+        ):
             agent.train()
 
         # state becomes state_2
@@ -340,7 +362,7 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
             # log episode return
             if agent.is_multi:
                 for i in range(agent.N_agents):
-                    agent.logger.store(**{f"Epi_Ret_{i}" : episode_return[i].item()})
+                    agent.logger.store(**{f"Epi_Ret_{i}": episode_return[i].item()})
             else:
                 agent.logger.store(Epi_Ret=episode_return)
 
@@ -349,7 +371,9 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
             episode_return = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
 
         # end of epoch handling
-        if (total_steps + 1) % config.epoch_length == 0 and (total_steps + 1) > config.upd_start_step:
+        if (total_steps + 1) % config.epoch_length == 0 and (
+            total_steps + 1
+        ) > config.upd_start_step:
 
             epoch = (total_steps + 1) // config.epoch_length
 
@@ -359,7 +383,7 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
             if agent.is_multi:
                 for ret_list in eval_ret:
                     for i in range(agent.N_agents):
-                        agent.logger.store(**{f"Eval_ret_{i}" : ret_list[i].item()})
+                        agent.logger.store(**{f"Eval_ret_{i}": ret_list[i].item()})
             else:
                 for ret in eval_ret:
                     agent.logger.store(Eval_ret=ret)
@@ -392,16 +416,17 @@ def train(config: ConfigFile, agent_name: str, compute_iPDP: bool, plot_frequenc
             agent.logger.dump_tabular()
 
             # create evaluation plot based on current 'progress.txt'
-            plot_from_progress(dir     = agent.logger.output_dir,
-                               alg     = agent.name,
-                               env_str = config.Env.name,
-                               info    = config.Env.info)
+            plot_from_progress(
+                dir=agent.logger.output_dir,
+                alg=agent.name,
+                env_str=config.Env.name,
+                info=config.Env.info,
+            )
             # save weights
             save_weights(agent, eval_ret)
 
+
 # def convert_agent_output_to_dict(fn_action_selection):
-
-
 
 
 def save_weights(agent: _Agent, eval_ret) -> None:
@@ -428,13 +453,25 @@ def save_weights(agent: _Agent, eval_ret) -> None:
             best_weights = False
 
     # usual save
-    torch.save(agent.actor.state_dict(), f"{agent.logger.output_dir}/{agent.name}_actor_weights.pth")
-    torch.save(agent.critic.state_dict(), f"{agent.logger.output_dir}/{agent.name}_critic_weights.pth")
+    torch.save(
+        agent.actor.state_dict(),
+        f"{agent.logger.output_dir}/{agent.name}_actor_weights.pth",
+    )
+    torch.save(
+        agent.critic.state_dict(),
+        f"{agent.logger.output_dir}/{agent.name}_critic_weights.pth",
+    )
 
     # best save
     if best_weights:
-        torch.save(agent.actor.state_dict(), f"{agent.logger.output_dir}/{agent.name}_actor_best_weights.pth")
-        torch.save(agent.critic.state_dict(), f"{agent.logger.output_dir}/{agent.name}_critic_best_weights.pth")
+        torch.save(
+            agent.actor.state_dict(),
+            f"{agent.logger.output_dir}/{agent.name}_actor_best_weights.pth",
+        )
+        torch.save(
+            agent.critic.state_dict(),
+            f"{agent.logger.output_dir}/{agent.name}_critic_best_weights.pth",
+        )
 
     # stores the replay buffer
     with open(f"{agent.logger.output_dir}/buffer.pickle", "wb") as handle:
