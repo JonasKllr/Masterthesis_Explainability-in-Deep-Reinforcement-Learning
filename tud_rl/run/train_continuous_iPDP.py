@@ -260,7 +260,7 @@ def train(
         if total_steps != 0 and total_steps % plot_frequency_iPDP == 0:
             fig, axes = incremental_explainer.plot_pdp(
                 title=f"iPDP after {total_steps} samples",  # title showing on the plots
-                show_pdp_transition=True,  # True: plot iPDPs in PDP storage. default: True
+                show_pdp_transition=True,  # True: plot iPDPs in PDP storage. Same blending strategy as for ICE curves default: True
                 show_ice_curves=False,  # True: plot ICE curves in ICE storage (with blending). default: True
                 y_min=-1.0,
                 y_max=1.0,  # TODO make dependable on. Even necessary?
