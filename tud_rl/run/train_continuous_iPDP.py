@@ -26,6 +26,7 @@ from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapper
 from tud_rl.iPDP_helper.validate_action_selection_wrapper import (
     vaildate_action_selection_wrapper,
 )
+from tud_rl.iPDP_helper.feature_importance import calculate_feature_importance
 
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
@@ -334,8 +335,20 @@ def train(
             )
             plt.clf()
 
+            feature_importance_0 = calculate_feature_importance(incremental_explainer_0.pdp_x_tracker.get(), incremental_explainer_0.pdp_y_tracker.get())
+            feature_importance_1 = calculate_feature_importance(incremental_explainer_1.pdp_x_tracker.get(), incremental_explainer_1.pdp_y_tracker.get())
 
-            # plt.show()
+            # plot feature importance
+            # plt.figure(figsize=(10, 6))  # Optional: Set the figure size
+            plt.barh(['feature_0', 'feature_1'], [feature_importance_0, feature_importance_1], color='skyblue')
+
+            # Add titles and labels
+            plt.xlabel('Feature Importance')
+            plt.ylabel('Features')
+            plt.title('PDP-based Feature Importance')
+            plt.tight_layout()
+            plt.show()
+            plt.clf()
 
         agent.mode = "train"
         # ------------- iPDP ----------------------------------------------------
