@@ -189,53 +189,40 @@ def train(
     episode_return = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
 
     # ----------------------------- init iPDP objects --------------------------------
-    agent.mode = "test"
-
-    feature_order = np.arange(start=0, stop=np.shape(state)[0])
-    feature_order = feature_order.tolist()
-    grid_size = 10
-    feature_of_interest_0 = 0
-    feature_of_interest_1 = 1
-
-    # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
-    model_function = ActionSelectionWrapper(agent.select_action)
-
     if compute_iPDP is True:
+        agent.mode = "test"
+
+        feature_order = np.arange(start=0, stop=np.shape(state)[0])
+        feature_order = feature_order.tolist()
+
+        grid_size = 10
+
+        # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
+        model_function = ActionSelectionWrapper(agent.select_action)
+
         storage = OrderedReservoirStorage(
             store_targets=False,  # False: store only feature values (x axis). True: store feature values and function output. default: False(function output not needed for iPDP)
             size=100,
             constant_probability=1.0,  # probability of adding a new value to the storage if amount of values in the storage equals size (reservior storage)
         )
 
-        incremental_explainer_0 = IncrementalPDP(
-            model_function=model_function,  # wrapped agent.select_action()
-            feature_names=feature_order,  # all features in state representation
-            gridsize=grid_size,  # number of grid points the function is evaluated at (points on x axis)
-            dynamic_setting=True,  # True for exponential everage iPDP
-            smoothing_alpha=0.001,  # smoothing parameter controlling time-sensitivity iPDP (0 < alpha < 1)
-            pdp_feature=feature_of_interest_0,  # feature of interest the iPDP is computed for
-            storage=storage,  # storage object for feature values. (for iPDP use OrderedReservoirStorage or others?!)
-            storage_size=10,  # NO INFLUENCE ON STORAGE OBJECT. 1. meaning: storage size+waiting_period amount of consecutive ICE curves are stored. If full, old ones are deleted. (2. meaning: used for blending in plots. older ICEs get a higher blending value, newer ones are more opaque). storage only for plotting.
-            output_key="output",  # basically irrelevant. needs to match self.default_label in base Wrapper Class
-            pdp_history_interval=1000,  # timestep frequency of storing iPDPs. if storage is full, old old ones get deleted. storage only for plotting
-            pdp_history_size=10,  # pdp storage size. amount of iPDPs stored for plotting
-            min_max_grid=True,  # True: absolute min max feature values (x axis), False: quantiles
-        )
-
-        incremental_explainer_1 = IncrementalPDP(
-            model_function=model_function,  # wrapped agent.select_action()
-            feature_names=feature_order,  # all features in state representation
-            gridsize=grid_size,  # number of grid points the function is evaluated at (points on x axis)
-            dynamic_setting=True,  # True for exponential everage iPDP
-            smoothing_alpha=0.001,  # smoothing parameter controlling time-sensitivity iPDP (0 < alpha < 1)
-            pdp_feature=feature_of_interest_1,  # feature of interest the iPDP is computed for
-            storage=storage,  # storage object for feature values. (for iPDP use OrderedReservoirStorage or others?!)
-            storage_size=10,  # NO INFLUENCE ON STORAGE OBJECT. 1. meaning: storage size+waiting_period amount of consecutive ICE curves are stored. If full, old ones are deleted. (2. meaning: used for blending in plots. older ICEs get a higher blending value, newer ones are more opaque). storage only for plotting.
-            output_key="output",  # basically irrelevant. needs to match self.default_label in base Wrapper Class
-            pdp_history_interval=1000,  # timestep frequency of storing iPDPs. if storage is full, old old ones get deleted. storage only for plotting
-            pdp_history_size=10,  # pdp storage size. amount of iPDPs stored for plotting
-            min_max_grid=True,  # True: absolute min max feature values (x axis), False: quantiles
-        )
+        incremental_explainer_array = []
+        for i in feature_order:
+            incremental_explainer = IncrementalPDP(
+                model_function=model_function,  # wrapped agent.select_action()
+                feature_names=feature_order,  # all features in state representation
+                gridsize=grid_size,  # number of grid points the function is evaluated at (points on x axis)
+                dynamic_setting=True,  # True for exponential everage iPDP
+                smoothing_alpha=0.001,  # smoothing parameter controlling time-sensitivity iPDP (0 < alpha < 1)
+                pdp_feature=i,  # feature of interest the iPDP is computed for
+                storage=storage,  # storage object for feature values. (for iPDP use OrderedReservoirStorage or others?!)
+                storage_size=10,  # NO INFLUENCE ON STORAGE OBJECT. 1. meaning: storage size+waiting_period amount of consecutive ICE curves are stored. If full, old ones are deleted. (2. meaning: used for blending in plots. older ICEs get a higher blending value, newer ones are more opaque). storage only for plotting.
+                output_key="output",  # basically irrelevant. needs to match self.default_label in base Wrapper Class
+                pdp_history_interval=1000,  # timestep frequency of storing iPDPs. if storage is full, old old ones get deleted. storage only for plotting
+                pdp_history_size=10,  # pdp storage size. amount of iPDPs stored for plotting
+                min_max_grid=True,  # True: absolute min max feature values (x axis), False: quantiles
+            )
+            incremental_explainer_array.append(incremental_explainer)
 
         params = {
             "legend.fontsize": "xx-large",
@@ -245,8 +232,13 @@ def train(
             "xtick.labelsize": "x-large",
             "ytick.labelsize": "x-large",
         }
-
         plt.rcParams.update(params)
+
+
+        PLOT_DIR = '/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/change_detection_plots/multi_plot/'
+        for i in feature_order:
+            if not os.path.exists(os.path.join(PLOT_DIR, f'feature_{i}')):
+                os.makedirs(os.path.join(PLOT_DIR, f'feature_{i}'))
 
         # for validation
         # output_agent_array = []
@@ -266,86 +258,76 @@ def train(
         # convert state to type dict
         state_iPDP = dict(enumerate(state))
 
+        for explainer in incremental_explainer_array:
+            explainer.explain_one(state_iPDP)
+
         # for validation
         # if total_steps > config.act_start_step:
         #     output_agent, output_wrapper = vaildate_action_selection_wrapper(agent, incremental_explainer, state, state_iPDP)
         #     output_agent_array.append(output_agent)
         #     output_wrapper_array.append(output_wrapper)
 
-        incremental_explainer_0.explain_one(state_iPDP)
-        incremental_explainer_1.explain_one(state_iPDP)
-
         if total_steps != 0 and total_steps % plot_frequency_iPDP == 0:
-            fig, axes = incremental_explainer_0.plot_pdp(
-                title=f"iPDP after {total_steps} samples",  # title showing on the plots
-                show_pdp_transition=False,  # True: plot iPDPs in PDP storage. Same blending strategy as for ICE curves default: True
-                show_ice_curves=False,  # True: plot ICE curves in ICE storage (with blending). default: True
-                y_min=-1.0,
-                y_max=1.0,  # TODO make dependable on. Even necessary?
-                x_min= None,
-                x_max= None,  # x/y min/max values for boundaries in plots
-                return_plot=True,  # return values for fig, axes ?!
-                n_decimals=None,  # ?? weird usage
-                x_transform=None,
-                y_transform=None,  # ??
-                batch_pdp=None,  # for plotting the normal PDP??
-                y_scale=None,  # for y axis in plot
-                y_label="Model Output",
-                figsize=None,
-                mean_centered_pd=False,
-                xticks=None,
-                xticklabels=None,
-                show_legend=True,
-            )
-            plt.savefig(
-                os.path.join(
-                    "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/change_detection_plots/multi_plot/feature_0",
-                    f"{total_steps}.pdf",
+            feature_importance_array = [None] * len(feature_order)
+
+            # for i in feature_order:
+            for i, explainer in enumerate(incremental_explainer_array):
+
+                explainer.plot_pdp(
+                    title=f"iPDP after {total_steps} samples",  # title showing on the plots
+                    show_pdp_transition=False,  # True: plot iPDPs in PDP storage. Same blending strategy as for ICE curves default: True
+                    show_ice_curves=False,  # True: plot ICE curves in ICE storage (with blending). default: True
+                    y_min=-1.0,
+                    y_max=1.0,  # TODO make dependable on. Even necessary?
+                    x_min=None,
+                    x_max=None,  # x/y min/max values for boundaries in plots
+                    return_plot=True,  # return values for fig, axes ?!
+                    n_decimals=None,  # ?? weird usage
+                    x_transform=None,
+                    y_transform=None,  # ??
+                    batch_pdp=None,  # for plotting the normal PDP??
+                    y_scale=None,  # for y axis in plot
+                    y_label="Model Output",
+                    figsize=None,
+                    mean_centered_pd=False,
+                    xticks=None,
+                    xticklabels=None,
+                    show_legend=True,
                 )
-            )
-            plt.clf()
 
-
-            fig, axes = incremental_explainer_1.plot_pdp(
-                title=f"iPDP after {total_steps} samples",  # title showing on the plots
-                show_pdp_transition=False,  # True: plot iPDPs in PDP storage. Same blending strategy as for ICE curves default: True
-                show_ice_curves=False,  # True: plot ICE curves in ICE storage (with blending). default: True
-                y_min=-1.0,
-                y_max=1.0,  # TODO make dependable on. Even necessary?
-                x_min= None,
-                x_max= None,  # x/y min/max values for boundaries in plots
-                return_plot=True,  # return values for fig, axes ?!
-                n_decimals=None,  # ?? weird usage
-                x_transform=None,
-                y_transform=None,  # ??
-                batch_pdp=None,  # for plotting the normal PDP??
-                y_scale=None,  # for y axis in plot
-                y_label="Model Output",
-                figsize=None,
-                mean_centered_pd=False,
-                xticks=None,
-                xticklabels=None,
-                show_legend=True,
-            )
-            plt.savefig(
-                os.path.join(
-                    "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/change_detection_plots/multi_plot/feature_1",
-                    f"{total_steps}.pdf",
+                plt.savefig(
+                    os.path.join(
+                        f"/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/change_detection_plots/multi_plot/feature_{i}",
+                        f"{total_steps}.pdf",
+                    )
                 )
-            )
-            plt.clf()
+                plt.clf()
 
-            feature_importance_0 = calculate_feature_importance(incremental_explainer_0.pdp_x_tracker.get(), incremental_explainer_0.pdp_y_tracker.get())
-            feature_importance_1 = calculate_feature_importance(incremental_explainer_1.pdp_x_tracker.get(), incremental_explainer_1.pdp_y_tracker.get())
+                feature_importance_array[i] = calculate_feature_importance(
+                    explainer.pdp_x_tracker.get(),
+                    explainer.pdp_y_tracker.get(),
+                )
+
+            # feature_importance_0 = calculate_feature_importance(
+            #     incremental_explainer_0.pdp_x_tracker.get(),
+            #     incremental_explainer_0.pdp_y_tracker.get(),
+            # )
+            # feature_importance_1 = calculate_feature_importance(
+            #     incremental_explainer_1.pdp_x_tracker.get(),
+            #     incremental_explainer_1.pdp_y_tracker.get(),
+            # )
 
             # plot feature importance
-            # plt.figure(figsize=(10, 6))  # Optional: Set the figure size
-            plt.barh(['feature_0', 'feature_1'], [feature_importance_0, feature_importance_1], color='skyblue')
+            plt.barh(
+                [f'feature_{i}' for i in feature_order],
+                feature_importance_array,
+                color="skyblue",
+            )
 
             # Add titles and labels
-            plt.xlabel('Feature Importance')
-            plt.ylabel('Features')
-            plt.title('PDP-based Feature Importance')
+            plt.xlabel("Feature Importance")
+            plt.ylabel("Features")
+            plt.title("PDP-based Feature Importance")
             plt.tight_layout()
             plt.show()
             plt.clf()
