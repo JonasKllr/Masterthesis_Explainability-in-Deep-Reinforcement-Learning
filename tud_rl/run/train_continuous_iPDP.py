@@ -202,7 +202,9 @@ def train(config: ConfigFile, agent_name: str):
     now = now.strftime("%Y-%m-%d_%H-%M")
 
     if ON_HPC:
-        PLOT_DIR_IPDP = "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/"
+        PLOT_DIR_IPDP = os.path.join(
+            "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now
+        )
     else:
         PLOT_DIR_IPDP = os.path.join(
             "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/iPDP/",
@@ -271,7 +273,8 @@ def train(config: ConfigFile, agent_name: str):
     for total_steps in range(config.timesteps):
 
         episode_steps += 1
-        print(total_steps)
+        if not ON_HPC:
+            print(total_steps)
 
         # --------------------------------------------------------------------------------
         # ------------- iPDP -------------------------------------------------------------
@@ -334,19 +337,6 @@ def train(config: ConfigFile, agent_name: str):
             )
             plt.clf()
             plt.close("all")
-
-            # plot feature importance
-            # plt.barh(
-            #     [f'feature_{i}' for i in feature_order],
-            #     feature_importance_array,
-            #     color="skyblue",
-            # )
-            # plt.xlabel("Feature Importance")
-            # plt.ylabel("Features")
-            # plt.title("PDP-based Feature Importance")
-            # plt.tight_layout()
-            # plt.show()
-            # plt.clf()
 
         agent.mode = "train"
         # --------------------------------------------------------------------------------
