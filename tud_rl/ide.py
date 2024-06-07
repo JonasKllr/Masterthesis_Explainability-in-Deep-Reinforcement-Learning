@@ -24,15 +24,10 @@ CONFIG_FILE = "ski_mdp.yaml"  # configuration file as `.yaml` or `.json`
 SEED = 42  # set a seed different to the one specified in your config
 AGENT_NAME = "DDPG"  # agent to train/viz
 DQN_WEIGHTS = None  # path to file for weight initialization (discrete actions)
-ACTOR_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_Ski-v0_MDP_2024-05-23_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
-CRITIC_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_Ski-v0_MDP_2024-05-23_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
-
-# ---------------- iPDP Settings -----------------------------
+ACTOR_WEIGHTS = None #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_Ski-v0_MDP_2024-05-31_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
+CRITIC_WEIGHTS = None #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_Ski-v0_MDP_2024-05-31_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
 
 COMPUTE_iPDP = True
-PLOT_FREQUENCY_iPDP = 5000
-
-
 # ------------------------------------------------------------
 # ------------------------------------------------------------
 
@@ -72,8 +67,6 @@ if TASK == "train":
         cont_iPDP.train(
             config=config,
             agent_name=AGENT_NAME,
-            compute_iPDP=COMPUTE_iPDP,
-            plot_frequency_iPDP=PLOT_FREQUENCY_iPDP,
         )
     else:
         if discrete:
