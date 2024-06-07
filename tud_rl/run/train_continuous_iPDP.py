@@ -1,4 +1,5 @@
 import csv
+import datetime
 import pickle
 import random
 import shutil
@@ -101,8 +102,7 @@ def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
     return rets
 
 
-def train(
-    config: ConfigFile, agent_name: str):
+def train(config: ConfigFile, agent_name: str):
     """Main training loop."""
 
     # measure computation time
@@ -192,14 +192,34 @@ def train(
 
     # --------------------------------------------------------------------------------
     # ----------------------------- init iPDP objects --------------------------------
-    # --------------------------------------------------------------------------------      
+    # --------------------------------------------------------------------------------
+
     PLOT_FREQUENCY_IPDP = 5000
     GRID_SIZE = 10
+    ON_HPC = False
+
+    now = datetime.datetime.now()
+    now = now.strftime("%Y-%m-%d_%H-%M")
+
+    if ON_HPC:
+        PLOT_DIR_IPDP = "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/"
+    else:
+        PLOT_DIR_IPDP = os.path.join(
+            "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/iPDP/",
+            now,
+        )
 
     agent.mode = "test"
 
     feature_order = np.arange(start=0, stop=np.shape(state)[0])
     feature_order = feature_order.tolist()
+
+    for i in feature_order:
+        if not os.path.exists(os.path.join(PLOT_DIR_IPDP, f"feature_{i}")):
+            os.makedirs(os.path.join(PLOT_DIR_IPDP, f"feature_{i}"))
+
+    if not os.path.exists(os.path.join(PLOT_DIR_IPDP, "feature_importance")):
+        os.makedirs(os.path.join(PLOT_DIR_IPDP, "feature_importance"))
 
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
     model_function = ActionSelectionWrapper(agent.select_action)
@@ -237,14 +257,6 @@ def train(
         "ytick.labelsize": "x-large",
     }
     plt.rcParams.update(params)
-
-    PLOT_DIR_IPDP = "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/iPDP/"
-    for i in feature_order:
-        if not os.path.exists(os.path.join(PLOT_DIR_IPDP, f"feature_{i}")):
-            os.makedirs(os.path.join(PLOT_DIR_IPDP, f"feature_{i}"))
-
-    if not os.path.exists(os.path.join(PLOT_DIR_IPDP, "feature_importance")):
-        os.makedirs(os.path.join(PLOT_DIR_IPDP, "feature_importance"))
 
     # for validation
     # output_agent_array = []
@@ -321,7 +333,7 @@ def train(
                 os.path.join(PLOT_DIR_IPDP, "feature_importance", f"{total_steps}.pdf")
             )
             plt.clf()
-            plt.close('all')
+            plt.close("all")
 
             # plot feature importance
             # plt.barh(
