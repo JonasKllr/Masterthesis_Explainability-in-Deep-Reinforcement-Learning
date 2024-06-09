@@ -195,7 +195,7 @@ def train(config: ConfigFile, agent_name: str):
     # --------------------------------------------------------------------------------
 
     PLOT_FREQUENCY_IPDP = 5000
-    GRID_SIZE = 10
+    GRID_SIZE = 5
     ON_HPC = False
 
     now = datetime.datetime.now()
@@ -226,14 +226,14 @@ def train(config: ConfigFile, agent_name: str):
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
     model_function = ActionSelectionWrapper(agent.select_action)
 
-    storage = OrderedReservoirStorage(
-        store_targets=False,  # False: store only feature values (x axis). True: store feature values and function output. default: False(function output not needed for iPDP)
-        size=5000,
-        constant_probability=1.0,  # probability of adding a new value to the storage if amount of values in the storage equals size (reservior storage)
-    )
-
     incremental_explainer_array = []
     for i in feature_order:
+        storage = OrderedReservoirStorage(
+            store_targets=False,  # False: store only feature values (x axis). True: store feature values and function output. default: False(function output not needed for iPDP)
+            size=500,
+            constant_probability=1.0,  # probability of adding a new value to the storage if amount of values in the storage equals size (reservior storage)
+        )
+
         incremental_explainer = IncrementalPDP(
             model_function=model_function,  # wrapped agent.select_action()
             feature_names=feature_order,  # all features in state representation
@@ -246,7 +246,7 @@ def train(config: ConfigFile, agent_name: str):
             output_key="output",  # basically irrelevant. needs to match self.default_label in base Wrapper Class
             pdp_history_interval=1000,  # timestep frequency of storing iPDPs. if storage is full, old old ones get deleted. storage only for plotting
             pdp_history_size=10,  # pdp storage size. amount of iPDPs stored for plotting
-            min_max_grid=True,  # True: absolute min max feature values (x axis), False: quantiles
+            min_max_grid=False,  # True: absolute min max feature values tracked by dynamic tracker (x axis), False: quantiles
         )
         incremental_explainer_array.append(incremental_explainer)
 
