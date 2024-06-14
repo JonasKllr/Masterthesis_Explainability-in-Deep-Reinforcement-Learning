@@ -24,8 +24,8 @@ CONFIG_FILE = "ski_mdp.yaml"  # configuration file as `.yaml` or `.json`
 SEED = 42  # set a seed different to the one specified in your config
 AGENT_NAME = "DDPG"  # agent to train/viz
 DQN_WEIGHTS = None  # path to file for weight initialization (discrete actions)
-ACTOR_WEIGHTS = None #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_Ski-v0_MDP_2024-05-31_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
-CRITIC_WEIGHTS = None #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_Ski-v0_MDP_2024-05-31_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
+ACTOR_WEIGHTS = None #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
+CRITIC_WEIGHTS = None #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
 
 COMPUTE_iPDP = True
 # ------------------------------------------------------------
