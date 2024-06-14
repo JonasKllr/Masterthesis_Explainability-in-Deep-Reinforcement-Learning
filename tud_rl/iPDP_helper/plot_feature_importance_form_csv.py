@@ -5,20 +5,26 @@ DIR_CSV = "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-
 data = pd.read_csv(DIR_CSV)
 
 # exponential moving average
-span = 4  # 1 for no smoothing
+span = 3  # 1 for no smoothing
 data = data.ewm(span=span, adjust=False).mean()
 
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(12, 8))
 for column in data.columns[1:]:
-    plt.plot(data["time_step"], data[column], label=column)
+    plt.plot(data["time_step"], data[column], label=column, linewidth=3.0)
 
 plt.xlabel("Time Step")
 plt.ylabel("Feature Importance")
-plt.title(
-    r"$\bf{iPDP-based\ Feature\ Importance}$"
-    + "\n"
-    + rf"exponentially smoothed with $\alpha = \dfrac{{2}}{{{span}+1}}$"
-)
+if span == 1:
+    plt.title(
+        r"$\bf{iPDP-based\ Feature\ Importance}$" + "\nwithout smoothing"
+    )
+else:
+    plt.title(
+        r"$\bf{iPDP-based\ Feature\ Importance}$"
+        + "\n"
+        + rf"exponentially smoothed with $\alpha = \dfrac{{2}}{{{span}+1}}$"
+    )
+    
 plt.legend()
-plt.grid(True)
+plt.tight_layout()
 plt.show()
