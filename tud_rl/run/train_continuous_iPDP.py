@@ -10,7 +10,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
+
+# import threading
 import torch
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ixai.explainer.pdp import IncrementalPDP
 from ixai.storage.ordered_reservoir_storage import OrderedReservoirStorage
@@ -30,7 +33,12 @@ from tud_rl.iPDP_helper.validate_action_selection_wrapper import (
 from tud_rl.iPDP_helper.feature_importance import (
     calculate_feature_importance,
     plot_feature_importance,
-    save_feature_importance_to_csv
+    save_feature_importance_to_csv,
+)
+from tud_rl.iPDP_helper.multi_threading import (
+    cast_state_buffer_to_array_of_dicts,
+    explain_one_threading,
+    get_new_states_in_buffer,
 )
 
 
@@ -286,8 +294,8 @@ def train(config: ConfigFile, agent_name: str):
         state_iPDP = dict(enumerate(state))
 
         # update iPDP for every feaute
-        for explainer in incremental_explainer_array:
-            explainer.explain_one(state_iPDP)
+        # for explainer in incremental_explainer_array:
+        #     explainer.explain_one(state_iPDP)
 
         # for validation
         # if total_steps > config.act_start_step:
@@ -297,6 +305,34 @@ def train(config: ConfigFile, agent_name: str):
 
         # plot iPDP and feature importance for every PLOT_FREQUENCY_IPDP
         if total_steps != 0 and total_steps % PLOT_FREQUENCY_IPDP == 0:
+
+            new_states = get_new_states_in_buffer(
+                agent.replay_buffer.s, agent.replay_buffer.ptr, PLOT_FREQUENCY_IPDP
+            )
+            state_dict_array = cast_state_buffer_to_array_of_dicts(new_states)
+
+            # threads = []
+
+            # for i, explainer in enumerate(incremental_explainer_array):
+            #     thread = threading.Thread(target=explain_one_threading, args=(explainer, state_dict_array))
+            #     threads.append(thread)
+            #     thread.start()
+
+            # for thread in threads:
+            #     thread.join()
+
+            with ThreadPoolExecutor(
+                max_workers=len(incremental_explainer_array)
+            ) as executor:
+                futures = [
+                    executor.submit(explain_one_threading, explainer, state_dict_array)
+                    for explainer in incremental_explainer_array
+                ]
+
+                # Wait for all threads to complete
+                for future in as_completed(futures):
+                    future.result()  # Ensure any exceptions are raised
+
             feature_importance_array = [None] * len(feature_order)
 
             for i, explainer in enumerate(incremental_explainer_array):
@@ -339,7 +375,9 @@ def train(config: ConfigFile, agent_name: str):
             plt.clf()
             plt.close("all")
 
-            save_feature_importance_to_csv(feature_order, feature_importance_array, total_steps, PLOT_DIR_IPDP)
+            save_feature_importance_to_csv(
+                feature_order, feature_importance_array, total_steps, PLOT_DIR_IPDP
+            )
 
         agent.mode = "train"
         # --------------------------------------------------------------------------------
