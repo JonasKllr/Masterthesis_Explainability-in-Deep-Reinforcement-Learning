@@ -11,9 +11,9 @@ import numpy as np
 import os
 import pandas as pd
 
-# import threading
+import threading
+import multiprocessing
 import torch
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ixai.explainer.pdp import IncrementalPDP
 from ixai.storage.ordered_reservoir_storage import OrderedReservoirStorage
@@ -206,6 +206,8 @@ def train(config: ConfigFile, agent_name: str):
     PLOT_FREQUENCY_IPDP = 5000
     GRID_SIZE = 5
     ON_HPC = False
+    if ON_HPC:
+        PLOT_FREQUENCY_IPDP = 100000
 
     now = datetime.datetime.now()
     now = now.strftime("%Y-%m-%d_%H-%M")
@@ -310,28 +312,17 @@ def train(config: ConfigFile, agent_name: str):
                 agent.replay_buffer.s, agent.replay_buffer.ptr, PLOT_FREQUENCY_IPDP
             )
             state_dict_array = cast_state_buffer_to_array_of_dicts(new_states)
+            
+            threads = []
 
-            # threads = []
+            for i, explainer in enumerate(incremental_explainer_array):
+                thread = threading.Thread(target=explain_one_threading, args=(explainer, state_dict_array))
+                threads.append(thread)
+                thread.start()
 
-            # for i, explainer in enumerate(incremental_explainer_array):
-            #     thread = threading.Thread(target=explain_one_threading, args=(explainer, state_dict_array))
-            #     threads.append(thread)
-            #     thread.start()
+            for thread in threads:
+                thread.join()
 
-            # for thread in threads:
-            #     thread.join()
-
-            with ThreadPoolExecutor(
-                max_workers=len(incremental_explainer_array)
-            ) as executor:
-                futures = [
-                    executor.submit(explain_one_threading, explainer, state_dict_array)
-                    for explainer in incremental_explainer_array
-                ]
-
-                # Wait for all threads to complete
-                for future in as_completed(futures):
-                    future.result()  # Ensure any exceptions are raised
 
             feature_importance_array = [None] * len(feature_order)
 
@@ -368,10 +359,10 @@ def train(config: ConfigFile, agent_name: str):
                     explainer.pdp_y_tracker.get(),
                 )
 
-            plot_feature_importance(feature_order, feature_importance_array)
-            plt.savefig(
-                os.path.join(PLOT_DIR_IPDP, "feature_importance", f"{total_steps}.pdf")
-            )
+            # plot_feature_importance(feature_order, feature_importance_array)
+            # plt.savefig(
+            #     os.path.join(PLOT_DIR_IPDP, "feature_importance", f"{total_steps}.pdf")
+            # )
             plt.clf()
             plt.close("all")
 
