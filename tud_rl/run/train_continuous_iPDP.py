@@ -206,7 +206,9 @@ def train(config: ConfigFile, agent_name: str):
 
     PLOT_FREQUENCY_IPDP = 5000
     GRID_SIZE = 5
+    THREADING = False
     ON_HPC = False
+
     if ON_HPC:
         PLOT_FREQUENCY_IPDP = 100000
 
@@ -314,33 +316,35 @@ def train(config: ConfigFile, agent_name: str):
             )
             state_dict_array = cast_state_buffer_to_array_of_dicts(new_states)
 
-            processes = []
-            queue = multiprocessing.Queue()
+            if THREADING:
+                processes = []
+                queue = multiprocessing.Queue()
 
-            for index, explainer in enumerate(incremental_explainer_array):
-                process = multiprocessing.Process(target=explain_one_threading, args=(index, explainer, state_dict_array, queue))
-                processes.append(process)
-                process.start()
+                for index, explainer in enumerate(incremental_explainer_array):
+                    process = multiprocessing.Process(
+                        target=explain_one_threading,
+                        args=(index, explainer, state_dict_array, queue),
+                    )
+                    processes.append(process)
+                    process.start()
 
-            updated_explainers = [None] * len(incremental_explainer_array)
-            while not queue.empty():
-                index, updated_explainer = queue.get()
-                updated_explainers[index] = updated_explainer
+                # Collect the updated explainers from the queue
+                updated_explainers = [None] * len(incremental_explainer_array)
+                while not queue.empty():
+                    index, updated_explainer = queue.get()
+                    updated_explainers[index] = updated_explainer
 
-            for process in processes:
-                process.join()
+                for process in processes:
+                    process.join()
 
-            # Collect the updated explainers from the queue
-            
-            # while not queue.empty():
-            #     index, updated_explainer = queue.get()
-            #     updated_explainers[index] = updated_explainer
-
-            incremental_explainer_array = updated_explainers
-
+                incremental_explainer_array = updated_explainers
+            else:
+                # update iPDP for every feaute
+                for explainer in incremental_explainer_array:
+                    for state_dict in state_dict_array:
+                        explainer.explain_one(state_dict)
 
             feature_importance_array = [None] * len(feature_order)
-
             for i, explainer in enumerate(incremental_explainer_array):
 
                 explainer.plot_pdp(
