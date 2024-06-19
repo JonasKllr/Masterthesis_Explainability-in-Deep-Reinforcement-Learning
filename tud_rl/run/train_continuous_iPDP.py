@@ -11,9 +11,10 @@ import numpy as np
 import os
 import pandas as pd
 
-import threading
 import multiprocessing
 import torch
+
+from time import sleep
 
 from ixai.explainer.pdp import IncrementalPDP
 from ixai.storage.ordered_reservoir_storage import OrderedReservoirStorage
@@ -196,7 +197,7 @@ def train(config: ConfigFile, agent_name: str):
     state = env.reset()
 
     # init episode step counter and episode return
-    episode_steps = 0
+    episode_steps = 20
     episode_return = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
 
     # --------------------------------------------------------------------------------
@@ -312,16 +313,30 @@ def train(config: ConfigFile, agent_name: str):
                 agent.replay_buffer.s, agent.replay_buffer.ptr, PLOT_FREQUENCY_IPDP
             )
             state_dict_array = cast_state_buffer_to_array_of_dicts(new_states)
+
+            processes = []
+            queue = multiprocessing.Queue()
+
+            for index, explainer in enumerate(incremental_explainer_array):
+                process = multiprocessing.Process(target=explain_one_threading, args=(index, explainer, state_dict_array, queue))
+                processes.append(process)
+                process.start()
+
+            updated_explainers = [None] * len(incremental_explainer_array)
+            while not queue.empty():
+                index, updated_explainer = queue.get()
+                updated_explainers[index] = updated_explainer
+
+            for process in processes:
+                process.join()
+
+            # Collect the updated explainers from the queue
             
-            threads = []
+            # while not queue.empty():
+            #     index, updated_explainer = queue.get()
+            #     updated_explainers[index] = updated_explainer
 
-            for i, explainer in enumerate(incremental_explainer_array):
-                thread = threading.Thread(target=explain_one_threading, args=(explainer, state_dict_array))
-                threads.append(thread)
-                thread.start()
-
-            for thread in threads:
-                thread.join()
+            incremental_explainer_array = updated_explainers
 
 
             feature_importance_array = [None] * len(feature_order)

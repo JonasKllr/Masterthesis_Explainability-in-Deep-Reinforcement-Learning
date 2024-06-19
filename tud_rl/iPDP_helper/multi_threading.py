@@ -1,5 +1,7 @@
 import numpy as np
 
+from multiprocessing import Queue
+
 
 def cast_state_buffer_to_array_of_dicts(state_buffer: np.ndarray):
     return [dict(enumerate(row)) for row in state_buffer]
@@ -15,10 +17,14 @@ def get_new_states_in_buffer(
     return state_buffer.take(indices=new_states_id, axis=0, mode="wrap")
 
 
-def explain_one_threading(explainer, state_dict_array):
+def explain_one_threading(index,  explainer, state_dict_array, queue: Queue):
     print("thread start")
+
     for state_dict in state_dict_array:
         explainer.explain_one(state_dict)
+        print(state_dict)
+
+    queue.put((index, explainer))
 
 
 if __name__ == "__main__":
