@@ -1,3 +1,9 @@
+import sys, os
+# sys.path.append('/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/iPDP/iXAI/ixai/explainer')
+# sys.path.append('/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/iPDP/iXAI')
+
+
+
 import csv
 import datetime
 import pickle
@@ -8,16 +14,15 @@ import time
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+# import os
 import pandas as pd
 
-import torch.multiprocessing as multiprocessing
+import multiprocessing as multiprocessing
 import torch
 
 from time import sleep
 
-from ixai.explainer.pdp import IncrementalPDP
-from ixai.storage.ordered_reservoir_storage import OrderedReservoirStorage
+from ixai.explainer.pdp import BatchPDP
 
 import tud_rl.agents.continuous as agents
 from tud_rl import logger
@@ -38,7 +43,7 @@ from tud_rl.iPDP_helper.feature_importance import (
 )
 from tud_rl.iPDP_helper.multi_threading import (
     cast_state_buffer_to_array_of_dicts,
-    explain_one_threading,
+    explain_one_threading_batch,
     get_new_states_in_buffer,
 )
 from tud_rl.iPDP_helper.PDP import calculate_pdp
@@ -207,7 +212,7 @@ def train(config: ConfigFile, agent_name: str):
 
     PLOT_FREQUENCY_IPDP = 5000
     GRID_SIZE = 5
-    THREADING = True
+    THREADING = False
     ON_HPC = False
 
     if ON_HPC:
@@ -241,29 +246,15 @@ def train(config: ConfigFile, agent_name: str):
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
     model_function = ActionSelectionWrapper(agent.select_action)
 
-    incremental_explainer_array = []
+    batch_explainer_array = []
     for i in feature_order:
-        storage = OrderedReservoirStorage(
-            store_targets=False,  # False: store only feature values (x axis). True: store feature values and function output. default: False(function output not needed for iPDP)
-            size=500,
-            constant_probability=1.0,  # probability of adding a new value to the storage if amount of values in the storage equals size (reservior storage)
-        )
-
-        incremental_explainer = IncrementalPDP(
+        batch_explainer = BatchPDP(
             model_function=model_function,  # wrapped agent.select_action()
-            feature_names=feature_order,  # all features in state representation
             gridsize=GRID_SIZE,  # number of grid points the function is evaluated at (points on x axis)
-            dynamic_setting=True,  # True for exponential everage iPDP
-            smoothing_alpha=0.001,  # smoothing parameter controlling time-sensitivity iPDP (0 < alpha < 1)
             pdp_feature=i,  # feature of interest the iPDP is computed for
-            storage=storage,  # storage object for feature values. (for iPDP use OrderedReservoirStorage or others?!)
-            storage_size=10,  # NO INFLUENCE ON STORAGE OBJECT. 1. meaning: storage size+waiting_period amount of consecutive ICE curves are stored. If full, old ones are deleted. (2. meaning: used for blending in plots. older ICEs get a higher blending value, newer ones are more opaque). storage only for plotting.
             output_key="output",  # basically irrelevant. needs to match self.default_label in base Wrapper Class
-            pdp_history_interval=1000,  # timestep frequency of storing iPDPs. if storage is full, old old ones get deleted. storage only for plotting
-            pdp_history_size=10,  # pdp storage size. amount of iPDPs stored for plotting
-            min_max_grid=False,  # True: absolute min max feature values tracked by dynamic tracker (x axis), False: quantiles
         )
-        incremental_explainer_array.append(incremental_explainer)
+        batch_explainer_array.append(batch_explainer)
 
     params = {
         "legend.fontsize": "xx-large",
@@ -297,7 +288,7 @@ def train(config: ConfigFile, agent_name: str):
         agent.mode = "test"
 
         # convert state to type dict
-        state_iPDP = dict(enumerate(state))
+        # state_iPDP = dict(enumerate(state))
 
         # update iPDP for every feaute
         # for explainer in incremental_explainer_array:
@@ -320,78 +311,78 @@ def train(config: ConfigFile, agent_name: str):
 
             if THREADING:
                 processes = []
-                queue = multiprocessing.Manager().Queue()
+                queue = multiprocessing.SimpleQueue()
 
-                for index, explainer in enumerate(incremental_explainer_array):
-                    # explain_one_threading(index, explainer, state_dict_array, queue)
-                    
+                for index, explainer in enumerate(batch_explainer_array):
                     process = multiprocessing.Process(
-                        target=explain_one_threading,
-                        args=(index, explainer, state_dict_array, queue),
+                        target=explain_one_threading_batch,
+                        args=(index, explainer, new_states, queue),
                     )
                     processes.append(process)
                     process.start()
 
                 # Collect the updated explainers from the queue
-                updated_explainers = [None] * len(incremental_explainer_array)
-                for _ in range(len(incremental_explainer_array)):
+                updated_explainers = [None] * len(batch_explainer_array)
+                for _ in range(len(batch_explainer_array)):
                     index, updated_explainer = queue.get()
                     updated_explainers[index] = updated_explainer
 
                 for process in processes:
                     process.join()
 
-                incremental_explainer_array = updated_explainers
+                batch_explainer_array = updated_explainers
             else:
                 # update iPDP for every feaute
-                for explainer in incremental_explainer_array:
-                    for state_dict in state_dict_array:
-                        explainer.explain_one(state_dict)
+                for explainer in batch_explainer_array:
+                    print("explaining features")
+                    explainer.explain_many(new_states)
 
             feature_importance_array = [None] * len(feature_order)
-            for i, explainer in enumerate(incremental_explainer_array):
+            for i, explainer in enumerate(batch_explainer_array):
 
+                if ON_HPC:
+                    PROP_VALUES_ON_DATA_DISTRIBUTION = 0.005
+                else:
+                    PROP_VALUES_ON_DATA_DISTRIBUTION = 0.1
+
+                print("plotting")
                 explainer.plot_pdp(
                     title=f"iPDP after {total_steps} samples",  # title showing on the plots
-                    show_pdp_transition=False,  # True: plot iPDPs in PDP storage. Same blending strategy as for ICE curves default: True
                     show_ice_curves=False,  # True: plot ICE curves in ICE storage (with blending). default: True
                     y_min=-1.0,
                     y_max=1.0,  # TODO make dependable on. Even necessary?
                     x_min=None,
                     x_max=None,  # x/y min/max values for boundaries in plots
                     return_plot=True,  # return values for fig, axes ?!
-                    n_decimals=None,  # ?? weird usage
-                    x_transform=None,
-                    y_transform=None,  # ??
-                    batch_pdp=None,  # for plotting the normal PDP??
-                    y_scale=None,  # for y axis in plot
+                    n_ice_curves_prop=PROP_VALUES_ON_DATA_DISTRIBUTION,
                     y_label="Model Output",
                     figsize=None,
-                    mean_centered_pd=False,
                     xticks=None,
                     xticklabels=None,
-                    show_legend=True,
+                    show_legend=False,
                 )
+                print("saving plot")
                 plt.savefig(
                     os.path.join(PLOT_DIR_IPDP, f"feature_{i}", f"{total_steps}.pdf")
                 )
                 plt.clf()
+                print("end saving plot")
 
+                print("calculate FI")
                 feature_importance_array[i] = calculate_feature_importance(
-                    explainer.pdp_x_tracker.get(),
-                    explainer.pdp_y_tracker.get(),
+                    explainer.pdp_values_x,
+                    explainer.pdp_values_y,
                 )
+                print("end calculate FI")
 
-            # plot_feature_importance(feature_order, feature_importance_array)
-            # plt.savefig(
-            #     os.path.join(PLOT_DIR_IPDP, "feature_importance", f"{total_steps}.pdf")
-            # )
             plt.clf()
             plt.close("all")
 
+            print("FI to csv")
             save_feature_importance_to_csv(
                 feature_order, feature_importance_array, total_steps, PLOT_DIR_IPDP
             )
+            print("end FI to csv")
 
         agent.mode = "train"
         # --------------------------------------------------------------------------------

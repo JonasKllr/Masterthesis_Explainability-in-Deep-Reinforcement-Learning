@@ -5,9 +5,13 @@ Basically the same as __main__.py but
 without the argument parser. 
 """
 
+import sys
+sys.path.append('/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code')
+
 import tud_rl.envs
 import tud_rl.run.train_continuous as cont
 import tud_rl.run.train_continuous_iPDP as cont_iPDP
+import tud_rl.run.train_continuous_PDP as cont_PDP
 import tud_rl.run.train_discrete as discr
 import tud_rl.run.visualize_continuous as vizcont
 import tud_rl.run.visualize_discrete as vizdiscr
@@ -64,7 +68,7 @@ config.max_episode_handler()
 
 if TASK == "train":
     if COMPUTE_iPDP == True:
-        cont_iPDP.train(
+        cont_PDP.train(
             config=config,
             agent_name=AGENT_NAME,
         )
