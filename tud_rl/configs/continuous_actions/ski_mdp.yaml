@@ -42,7 +42,7 @@ agent:
     n_qs: 25
     n_critics: 5
 seed: 12
-timesteps: 15000000
+timesteps: 4000000
 epoch_length: 5000
 eval_episodes: 10
 actor_weights:
