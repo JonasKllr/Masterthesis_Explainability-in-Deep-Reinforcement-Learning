@@ -5,9 +5,6 @@ Basically the same as __main__.py but
 without the argument parser. 
 """
 
-import sys
-sys.path.append('/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code')
-
 import tud_rl.envs
 import tud_rl.run.train_continuous as cont
 import tud_rl.run.train_continuous_iPDP as cont_iPDP
@@ -28,8 +25,8 @@ CONFIG_FILE = "ski_mdp.yaml"  # configuration file as `.yaml` or `.json`
 SEED = 42  # set a seed different to the one specified in your config
 AGENT_NAME = "DDPG"  # agent to train/viz
 DQN_WEIGHTS = None  # path to file for weight initialization (discrete actions)
-ACTOR_WEIGHTS = None #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
-CRITIC_WEIGHTS = None #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
+ACTOR_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
+CRITIC_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
 
 COMPUTE_iPDP = True
 # ------------------------------------------------------------

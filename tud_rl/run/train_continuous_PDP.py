@@ -1,9 +1,3 @@
-import sys, os
-# sys.path.append('/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/iPDP/iXAI/ixai/explainer')
-# sys.path.append('/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/iPDP/iXAI')
-
-
-
 import csv
 import datetime
 import pickle
@@ -14,7 +8,8 @@ import time
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
-# import os
+
+import os
 import pandas as pd
 
 import multiprocessing as multiprocessing
@@ -301,13 +296,9 @@ def train(config: ConfigFile, agent_name: str):
 
         # plot iPDP and feature importance for every PLOT_FREQUENCY_IPDP
         if total_steps != 0 and total_steps % PLOT_FREQUENCY_IPDP == 0:
-            print("getting new states")
             new_states = get_new_states_in_buffer(
                 agent.replay_buffer.s, agent.replay_buffer.ptr, PLOT_FREQUENCY_IPDP
             )
-            print("casting states")
-            state_dict_array = cast_state_buffer_to_array_of_dicts(new_states)
-
             if THREADING:
                 processes = []
                 queue = multiprocessing.SimpleQueue()
@@ -360,28 +351,23 @@ def train(config: ConfigFile, agent_name: str):
                     xticklabels=None,
                     show_legend=False,
                 )
-                print("saving plot")
                 plt.savefig(
                     os.path.join(PLOT_DIR_IPDP, f"feature_{i}", f"{total_steps}.pdf")
                 )
                 plt.clf()
-                print("end saving plot")
 
                 print("calculate FI")
                 feature_importance_array[i] = calculate_feature_importance(
                     explainer.pdp_values_x,
                     explainer.pdp_values_y,
                 )
-                print("end calculate FI")
 
             plt.clf()
             plt.close("all")
 
-            print("FI to csv")
             save_feature_importance_to_csv(
                 feature_order, feature_importance_array, total_steps, PLOT_DIR_IPDP
             )
-            print("end FI to csv")
 
         agent.mode = "train"
         # --------------------------------------------------------------------------------
