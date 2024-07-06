@@ -34,7 +34,7 @@ from tud_rl.iPDP_helper.validate_action_selection_wrapper import (
 from tud_rl.iPDP_helper.feature_importance import (
     calculate_feature_importance,
     plot_feature_importance,
-    save_feature_importance_to_csv,
+    save_feature_importance_to_csv_pdp,
 )
 from tud_rl.iPDP_helper.multi_threading import (
     cast_state_buffer_to_array_of_dicts,
@@ -388,7 +388,7 @@ def train(config: ConfigFile, agent_name: str):
             plt.clf()
             plt.close("all")
 
-            save_feature_importance_to_csv(
+            save_feature_importance_to_csv_pdp(
                 feature_order, feature_importance_array, total_steps, PLOT_DIR_IPDP
             )
 

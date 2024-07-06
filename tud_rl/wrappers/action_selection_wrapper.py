@@ -1,6 +1,8 @@
 import typing
+import numpy as np
 
 from ixai.utils.wrappers.base import Wrapper
+
 
 
 class ActionSelectionWrapper(Wrapper):
@@ -31,3 +33,20 @@ class ActionSelectionWrapper(Wrapper):
         x_input = self.convert_1d_input_to_arr(x)
         output = self._prediction_function(x_input)
         return self.convert_arr_output_to_dict(output)
+    
+class ActionSelectionWrapperALE():
+    def __init__(self, action_selection_function, feature_of_interest = None) -> None:
+        # self.action_selection_function = np.vectorize(action_selection_function)
+        self.action_selection_function = action_selection_function
+
+    def __call__(self, x: typing.Union[typing.List[dict], dict]) -> typing.Any:
+        output = np.zeros_like(x)
+        for i in range(np.shape(x)[0]):
+            output[i,:] = self.action_selection_function(x[i,:])
+            
+            # np.append(output, self.action_selection_function(data_point))
+
+
+        
+        
+        return output
