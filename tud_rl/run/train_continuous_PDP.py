@@ -288,8 +288,9 @@ def train(config: ConfigFile, agent_name: str):
             ale_explainer_array.append(ale_explainer)
 
     # for validation
-    # output_agent_array = []
-    # output_wrapper_array = []
+    output_agent_array = []
+    output_wrapper_array = []
+    multiple_states = np.empty_like([state])
 
     agent.mode = "train"
     # --------------------------------------------------------------------------------
@@ -320,6 +321,15 @@ def train(config: ConfigFile, agent_name: str):
         #     output_agent, output_wrapper = vaildate_action_selection_wrapper(agent, incremental_explainer, state, state_iPDP)
         #     output_agent_array.append(output_agent)
         #     output_wrapper_array.append(output_wrapper)
+
+        multiple_states = np.append(multiple_states, [state], axis=0)
+        if total_steps % 5000 == 0:
+            output_agent = agent.select_action(state)
+            output_wrapper = ale_explainer_array[0].predictor(multiple_states)
+            output_agent_array.append(output_agent)
+            output_wrapper_array.append(output_wrapper)
+
+
 
         # plot iPDP and feature importance for every PLOT_FREQUENCY_IPDP
         if total_steps != 0 and total_steps % PLOT_FREQUENCY_IPDP == 0:
@@ -397,6 +407,10 @@ def train(config: ConfigFile, agent_name: str):
             )
 
             if ALE_CALCULATE:
+
+                
+        
+
                 feature_grid_points = np.linspace(start=new_states.min(), stop=new_states.max(), num=10)
 
                 for i, explainer in enumerate(ale_explainer_array):
