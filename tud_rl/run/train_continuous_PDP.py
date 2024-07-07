@@ -27,7 +27,10 @@ from tud_rl.common.configparser import ConfigFile
 from tud_rl.common.logging_func import EpochLogger
 from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
-from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapper, ActionSelectionWrapperALE
+from tud_rl.wrappers.action_selection_wrapper import (
+    ActionSelectionWrapper,
+    ActionSelectionWrapperALE,
+)
 
 from tud_rl.iPDP_helper.validate_action_selection_wrapper import (
     vaildate_action_selection_wrapper,
@@ -37,7 +40,7 @@ from tud_rl.iPDP_helper.feature_importance import (
     calculate_feature_importance_ale,
     plot_feature_importance,
     save_feature_importance_to_csv_pdp,
-    save_feature_importance_to_csv_ale
+    save_feature_importance_to_csv_ale,
 )
 from tud_rl.iPDP_helper.multi_threading import (
     cast_state_buffer_to_array_of_dicts,
@@ -229,11 +232,13 @@ def train(config: ConfigFile, agent_name: str):
     else:
         PLOT_DIR_IPDP = os.path.join(
             "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
-            now, "pdp/"
+            now,
+            "pdp/",
         )
         PLOT_DIR_ALE = os.path.join(
             "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
-            now, "ale/"
+            now,
+            "ale/",
         )
 
     agent.mode = "test"
@@ -278,19 +283,16 @@ def train(config: ConfigFile, agent_name: str):
     if ALE_CALCULATE:
         feature_names = []
         for i in feature_order:
-            feature_name = f'feature_{i}'
+            feature_name = f"feature_{i}"
             feature_names.append(feature_name)
 
-        ale_function = ActionSelectionWrapperALE(action_selection_function=agent.select_action)
+        ale_function = ActionSelectionWrapperALE(
+            action_selection_function=agent.select_action
+        )
         ale_explainer_array = []
         for i in feature_order:
             ale_explainer = ALE(predictor=ale_function, feature_names=feature_names)
             ale_explainer_array.append(ale_explainer)
-
-    # for validation
-    output_agent_array = []
-    output_wrapper_array = []
-    multiple_states = np.empty_like([state])
 
     agent.mode = "train"
     # --------------------------------------------------------------------------------
@@ -308,28 +310,6 @@ def train(config: ConfigFile, agent_name: str):
         # ------------- iPDP -------------------------------------------------------------
         # --------------------------------------------------------------------------------
         agent.mode = "test"
-
-        # convert state to type dict
-        # state_iPDP = dict(enumerate(state))
-
-        # update iPDP for every feaute
-        # for explainer in incremental_explainer_array:
-        #     explainer.explain_one(state_iPDP)
-
-        # for validation
-        # if total_steps > config.act_start_step:
-        #     output_agent, output_wrapper = vaildate_action_selection_wrapper(agent, incremental_explainer, state, state_iPDP)
-        #     output_agent_array.append(output_agent)
-        #     output_wrapper_array.append(output_wrapper)
-
-        multiple_states = np.append(multiple_states, [state], axis=0)
-        if total_steps % 5000 == 0:
-            output_agent = agent.select_action(state)
-            output_wrapper = ale_explainer_array[0].predictor(multiple_states)
-            output_agent_array.append(output_agent)
-            output_wrapper_array.append(output_wrapper)
-
-
 
         # plot iPDP and feature importance for every PLOT_FREQUENCY_IPDP
         if total_steps != 0 and total_steps % PLOT_FREQUENCY_IPDP == 0:
@@ -408,22 +388,23 @@ def train(config: ConfigFile, agent_name: str):
 
             if ALE_CALCULATE:
 
-                
-        
-
-                feature_grid_points = np.linspace(start=new_states.min(), stop=new_states.max(), num=10)
+                feature_grid_points = np.linspace(
+                    start=new_states.min(), stop=new_states.max(), num=10
+                )
 
                 for i, explainer in enumerate(ale_explainer_array):
                     grid_points = {i: feature_grid_points}
-                    ale_explanation = explainer.explain(X=new_states, features=[i], grid_points=grid_points)
-                    plot_ale(ale_explanation)  
-                    plt.ylim(-1, 1)   
+                    ale_explanation = explainer.explain(
+                        X=new_states, features=[i], grid_points=grid_points
+                    )
+                    plot_ale(ale_explanation)
+                    plt.ylim(-1, 1)
                     # plt.show()
                     plt.savefig(
                         os.path.join(PLOT_DIR_ALE, f"feature_{i}", f"{total_steps}.pdf")
                     )
                     plt.clf()
-                    #TODO legend still shows all features. should only show the one that's plotted                    
+                    # TODO legend still shows all features. should only show the one that's plotted
 
                     print("calculate FI")
                     feature_importance_array[i] = calculate_feature_importance_ale(
@@ -431,10 +412,11 @@ def train(config: ConfigFile, agent_name: str):
                         ale_explanation.ale_values[0],
                     )
 
-                plt.close('all')
+                plt.close("all")
 
-                save_feature_importance_to_csv_ale(feature_order, feature_importance_array, total_steps, PLOT_DIR_ALE)
-
+                save_feature_importance_to_csv_ale(
+                    feature_order, feature_importance_array, total_steps, PLOT_DIR_ALE
+                )
 
         agent.mode = "train"
         # --------------------------------------------------------------------------------
