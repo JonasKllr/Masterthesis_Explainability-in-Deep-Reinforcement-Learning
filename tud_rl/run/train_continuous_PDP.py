@@ -357,7 +357,7 @@ def train(config: ConfigFile, agent_name: str):
                     title=f"iPDP after {total_steps} samples",  # title showing on the plots
                     show_ice_curves=False,  # True: plot ICE curves in ICE storage (with blending). default: True
                     y_min=-1.0,
-                    y_max=1.0,  # TODO make dependable on. Even necessary?
+                    y_max=1.0,
                     x_min=None,
                     x_max=None,  # x/y min/max values for boundaries in plots
                     return_plot=True,  # return values for fig, axes ?!
@@ -388,23 +388,33 @@ def train(config: ConfigFile, agent_name: str):
 
             if ALE_CALCULATE:
 
-                feature_grid_points = np.linspace(
-                    start=new_states.min(), stop=new_states.max(), num=10
-                )
-
                 for i, explainer in enumerate(ale_explainer_array):
+
+                    min_feature_value = np.min(new_states[:, i])
+                    max_feature_value = np.max(new_states[:, i])
+
+                    feature_grid_points = np.linspace(
+                        start=min_feature_value, stop=max_feature_value, num=10
+                    )
                     grid_points = {i: feature_grid_points}
+
                     ale_explanation = explainer.explain(
                         X=new_states, features=[i], grid_points=grid_points
                     )
-                    plot_ale(ale_explanation)
-                    plt.ylim(-1, 1)
-                    # plt.show()
+                    axes = plot_ale(ale_explanation)
+
+                    # if ALE values are in range [-1, 1]
+                    if not (np.min(ale_explanation.ale_values[0]) < -1) or (
+                        np.max(ale_explanation.ale_values[0]) > 1
+                    ):
+                        plt.ylim(-1, 1)
+
+                    plt.legend("", frameon=False)
+
                     plt.savefig(
                         os.path.join(PLOT_DIR_ALE, f"feature_{i}", f"{total_steps}.pdf")
                     )
-                    plt.clf()
-                    # TODO legend still shows all features. should only show the one that's plotted
+                    plt.close("all")
 
                     print("calculate FI")
                     feature_importance_array[i] = calculate_feature_importance_ale(
