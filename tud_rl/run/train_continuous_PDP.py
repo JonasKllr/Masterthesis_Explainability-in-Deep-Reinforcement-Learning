@@ -210,14 +210,14 @@ def train(config: ConfigFile, agent_name: str):
     # ----------------------------- init iPDP objects --------------------------------
     # --------------------------------------------------------------------------------
 
-    PLOT_FREQUENCY_IPDP = 5000
+    EXPLAIN_FREQUENCY = 5000
     GRID_SIZE = 5
     THREADING = False
     ON_HPC = False
     ALE_CALCULATE = True
 
     if ON_HPC:
-        PLOT_FREQUENCY_IPDP = 100000
+        EXPLAIN_FREQUENCY = 100000
 
     now = datetime.datetime.now()
     now = now.strftime("%Y-%m-%d_%H-%M")
@@ -311,10 +311,10 @@ def train(config: ConfigFile, agent_name: str):
         # --------------------------------------------------------------------------------
         agent.mode = "test"
 
-        # plot iPDP and feature importance for every PLOT_FREQUENCY_IPDP
-        if total_steps != 0 and total_steps % PLOT_FREQUENCY_IPDP == 0:
+        # plot iPDP and feature importance for every EXPLAIN_FREQUENCY
+        if total_steps != 0 and total_steps % EXPLAIN_FREQUENCY == 0:
             new_states = get_new_states_in_buffer(
-                agent.replay_buffer.s, agent.replay_buffer.ptr, PLOT_FREQUENCY_IPDP
+                agent.replay_buffer.s, agent.replay_buffer.ptr, EXPLAIN_FREQUENCY
             )
             if THREADING:
                 processes = []
@@ -392,24 +392,22 @@ def train(config: ConfigFile, agent_name: str):
 
                     min_feature_value = np.min(new_states[:, i])
                     max_feature_value = np.max(new_states[:, i])
-
-                    feature_grid_points = np.linspace(
+                    grid_points = np.linspace(
                         start=min_feature_value, stop=max_feature_value, num=10
                     )
-                    grid_points = {i: feature_grid_points}
+                    grid_points_dict = {i: grid_points}
 
                     ale_explanation = explainer.explain(
-                        X=new_states, features=[i], grid_points=grid_points
+                        X=new_states, features=[i], grid_points=grid_points_dict
                     )
-                    axes = plot_ale(ale_explanation)
+                    plot_ale(ale_explanation)
+                    plt.legend("", frameon=False)
 
                     # if ALE values are in range [-1, 1]
                     if not (np.min(ale_explanation.ale_values[0]) < -1) or (
                         np.max(ale_explanation.ale_values[0]) > 1
                     ):
                         plt.ylim(-1, 1)
-
-                    plt.legend("", frameon=False)
 
                     plt.savefig(
                         os.path.join(PLOT_DIR_ALE, f"feature_{i}", f"{total_steps}.pdf")
