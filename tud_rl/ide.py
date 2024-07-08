@@ -9,6 +9,7 @@ import tud_rl.envs
 import tud_rl.run.train_continuous as cont
 import tud_rl.run.train_continuous_iPDP as cont_iPDP
 import tud_rl.run.train_continuous_PDP as cont_PDP
+import tud_rl.run.train_continuous_explainer as cont_explainer
 import tud_rl.run.train_discrete as discr
 import tud_rl.run.visualize_continuous as vizcont
 import tud_rl.run.visualize_discrete as vizdiscr
@@ -65,7 +66,7 @@ config.max_episode_handler()
 
 if TASK == "train":
     if COMPUTE_iPDP == True:
-        cont_PDP.train(
+        cont_explainer.train(
             config=config,
             agent_name=AGENT_NAME,
         )
