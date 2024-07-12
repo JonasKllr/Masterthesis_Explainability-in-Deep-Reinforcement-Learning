@@ -214,7 +214,7 @@ def train(config: ConfigFile, agent_name: str):
     GRID_SIZE = 5
     THREADING = False
     ON_HPC = False
-    
+
     PDP_CALCULATE = True
     ALE_CALCULATE = False
 
@@ -260,7 +260,9 @@ def train(config: ConfigFile, agent_name: str):
         os.makedirs(os.path.join(PLOT_DIR_ALE, "feature_importance"))
 
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
-    model_function = ActionSelectionWrapperALE(action_selection_function=agent.select_action)
+    model_function = ActionSelectionWrapperALE(
+        action_selection_function=agent.select_action
+    )
 
     feature_names = []
     target_names = []
@@ -270,7 +272,10 @@ def train(config: ConfigFile, agent_name: str):
 
     if PDP_CALCULATE:
         pdp_explainer = PartialDependence(
-            predictor=model_function, feature_names=feature_names, target_names=['agent action'])
+            predictor=model_function,
+            feature_names=feature_names,
+            target_names=["agent action"],
+        )
 
     if ALE_CALCULATE:
         ale_explainer_array = []
@@ -305,7 +310,12 @@ def train(config: ConfigFile, agent_name: str):
                 # update iPDP for every feaute
                 # for explainer in batch_explainer_array:
                 print("explaining features")
-                pdp_explanations = pdp_explainer.explain(X=new_states, features=None, kind='average', grid_resolution=GRID_SIZE)
+                pdp_explanations = pdp_explainer.explain(
+                    X=new_states,
+                    features=None,
+                    kind="average",
+                    grid_resolution=GRID_SIZE,
+                )
 
                 feature_importance_array = [None] * len(feature_order)
                 # for i, explainer in enumerate(batch_explainer_array):
@@ -316,26 +326,15 @@ def train(config: ConfigFile, agent_name: str):
                 # plt.legend("", frameon=False)
                 plt.show()
 
-                plt.savefig(
-                    os.path.join(PLOT_DIR_IPDP, f"{total_steps}.pdf")
-                )
+                plt.savefig(os.path.join(PLOT_DIR_IPDP, f"{total_steps}.pdf"))
                 plt.clf()
-
-
-
 
                 print("calculate FI")
                 for i in feature_order:
                     feature_importance_array[i] = calculate_feature_importance(
                         pdp_explanations.feature_values[i],
-                        pdp_explanations.pd_values[i][0,:],
+                        pdp_explanations.pd_values[i][0, :],
                     )
-
-
-
-
-
-
 
                 plt.clf()
                 plt.close("all")
