@@ -18,7 +18,8 @@ import torch
 from time import sleep
 
 from ixai.explainer.pdp import BatchPDP
-from alibi.explainers import ALE, plot_ale, PartialDependence, plot_pd
+from alibi.explainers import ALE, plot_ale, PartialDependence, plot_pd, KernelShap
+import shap
 
 import tud_rl.agents.continuous as agents
 from tud_rl import logger
@@ -41,6 +42,8 @@ from tud_rl.iPDP_helper.feature_importance import (
     plot_feature_importance,
     save_feature_importance_to_csv_pdp,
     save_feature_importance_to_csv_ale,
+    sort_feature_importance_SHAP,
+    save_feature_importance_to_csv_SHAP,
 )
 from tud_rl.iPDP_helper.multi_threading import (
     cast_state_buffer_to_array_of_dicts,
@@ -215,8 +218,9 @@ def train(config: ConfigFile, agent_name: str):
     THREADING = False
     ON_HPC = False
 
-    PDP_CALCULATE = True
+    PDP_CALCULATE = False
     ALE_CALCULATE = False
+    SHAP_CALCULATE = True
 
     if ON_HPC:
         EXPLAIN_FREQUENCY = 100000
@@ -231,6 +235,9 @@ def train(config: ConfigFile, agent_name: str):
         PLOT_DIR_ALE = os.path.join(
             "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now, "ale/"
         )
+        PLOT_DIR_SHAP = os.path.join(
+            "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now, "SHAP/"
+        )
     else:
         PLOT_DIR_IPDP = os.path.join(
             "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
@@ -241,6 +248,11 @@ def train(config: ConfigFile, agent_name: str):
             "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
             now,
             "ale/",
+        )
+        PLOT_DIR_SHAP = os.path.join(
+            "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
+            now,
+            "SHAP/",
         )
 
     agent.mode = "test"
@@ -253,11 +265,15 @@ def train(config: ConfigFile, agent_name: str):
             os.makedirs(os.path.join(PLOT_DIR_IPDP, f"feature_{i}"))
         if not os.path.exists(os.path.join(PLOT_DIR_ALE, f"feature_{i}")):
             os.makedirs(os.path.join(PLOT_DIR_ALE, f"feature_{i}"))
+        if not os.path.exists(os.path.join(PLOT_DIR_SHAP, f"feature_{i}")):
+            os.makedirs(os.path.join(PLOT_DIR_SHAP, f"feature_{i}"))
 
     if not os.path.exists(os.path.join(PLOT_DIR_IPDP, "feature_importance")):
         os.makedirs(os.path.join(PLOT_DIR_IPDP, "feature_importance"))
     if not os.path.exists(os.path.join(PLOT_DIR_ALE, "feature_importance")):
         os.makedirs(os.path.join(PLOT_DIR_ALE, "feature_importance"))
+    if not os.path.exists(os.path.join(PLOT_DIR_SHAP, "feature_importance")):
+        os.makedirs(os.path.join(PLOT_DIR_SHAP, "feature_importance"))
 
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
     model_function = ActionSelectionWrapperALE(
@@ -265,7 +281,6 @@ def train(config: ConfigFile, agent_name: str):
     )
 
     feature_names = []
-    target_names = []
     for i in feature_order:
         feature_name = f"feature_{i}"
         feature_names.append(feature_name)
@@ -274,14 +289,21 @@ def train(config: ConfigFile, agent_name: str):
         pdp_explainer = PartialDependence(
             predictor=model_function,
             feature_names=feature_names,
-            target_names=["agent action"],
+            target_names=["Partial Dependence"],
         )
 
     if ALE_CALCULATE:
-        ale_explainer_array = []
-        for i in feature_order:
-            ale_explainer = ALE(predictor=model_function, feature_names=feature_names)
-            ale_explainer_array.append(ale_explainer)
+        ale_explainer = ALE(
+            predictor=model_function, feature_names=feature_names, target_names=["ALE"]
+        )
+
+    if SHAP_CALCULATE:
+        shap_explainer = KernelShap(
+            predictor=model_function,
+            link="identity",
+            feature_names=feature_names,
+            task="regression",
+        )
 
     agent.mode = "train"
     # --------------------------------------------------------------------------------
@@ -306,81 +328,110 @@ def train(config: ConfigFile, agent_name: str):
                 agent.replay_buffer.s, agent.replay_buffer.ptr, EXPLAIN_FREQUENCY
             )
 
+            feature_importance_array = [None] * len(feature_order)
+
             if PDP_CALCULATE:
-                # update iPDP for every feaute
-                # for explainer in batch_explainer_array:
-                print("explaining features")
+                print("calculating PDP")
                 pdp_explanations = pdp_explainer.explain(
                     X=new_states,
                     features=None,
                     kind="average",
                     grid_resolution=GRID_SIZE,
                 )
-
-                feature_importance_array = [None] * len(feature_order)
-                # for i, explainer in enumerate(batch_explainer_array):
-
-                print("plotting")
                 plot_pd(pdp_explanations, pd_limits=[-1.0, 1.0])
-
-                # plt.legend("", frameon=False)
-                plt.show()
-
                 plt.savefig(os.path.join(PLOT_DIR_IPDP, f"{total_steps}.pdf"))
                 plt.clf()
+                plt.close("all")
 
-                print("calculate FI")
                 for i in feature_order:
                     feature_importance_array[i] = calculate_feature_importance(
-                        pdp_explanations.feature_values[i],
-                        pdp_explanations.pd_values[i][0, :],
+                        y_values=pdp_explanations.pd_values[i][0, :],
                     )
-
-                plt.clf()
-                plt.close("all")
 
                 save_feature_importance_to_csv_pdp(
                     feature_order, feature_importance_array, total_steps, PLOT_DIR_IPDP
                 )
 
             if ALE_CALCULATE:
-
-                for i, explainer in enumerate(ale_explainer_array):
+                print("calculating ALE")
+                grid_points_dict = {}
+                for i in feature_order:
 
                     min_feature_value = np.min(new_states[:, i])
                     max_feature_value = np.max(new_states[:, i])
                     grid_points = np.linspace(
                         start=min_feature_value, stop=max_feature_value, num=10
                     )
-                    grid_points_dict = {i: grid_points}
+                    grid_points_dict[i] = grid_points
 
-                    ale_explanation = explainer.explain(
-                        X=new_states, features=[i], grid_points=grid_points_dict
-                    )
-                    plot_ale(ale_explanation)
-                    plt.legend("", frameon=False)
+                # ale_explanations = ale_explainer.explain(X=new_states, grid_points=grid_points_dict)
+                ale_explanations = ale_explainer.explain(X=new_states)
 
-                    # if ALE values are in range [-1, 1]
-                    if not (np.min(ale_explanation.ale_values[0]) < -1) or (
-                        np.max(ale_explanation.ale_values[0]) > 1
-                    ):
-                        plt.ylim(-1, 1)
+                plot_ale(ale_explanations, n_cols=3)
+                # TODO remove legend
+                # plt.legend("", frameon=False)
+                plt.legend()
 
-                    plt.savefig(
-                        os.path.join(PLOT_DIR_ALE, f"feature_{i}", f"{total_steps}.pdf")
-                    )
-                    plt.close("all")
+                plt.gca().get_legend().remove()
 
-                    print("calculate FI")
-                    feature_importance_array[i] = calculate_feature_importance_ale(
-                        ale_explanation.feature_values[0],
-                        ale_explanation.ale_values[0],
-                    )
+                # if ALE values are in range [-1, 1]
+                if not (np.min(np.concatenate(ale_explanations.ale_values)) < -1) or (
+                    np.max(np.concatenate(ale_explanations.ale_values)) > 1
+                ):
+                    plt.ylim(-1, 1)
 
+                plt.savefig(os.path.join(PLOT_DIR_ALE, f"{total_steps}.pdf"))
                 plt.close("all")
+
+                for i in feature_order:
+                    feature_importance_array[i] = calculate_feature_importance(
+                        np.reshape(ale_explanations.ale_values[0], (-1,))
+                    )
 
                 save_feature_importance_to_csv_ale(
                     feature_order, feature_importance_array, total_steps, PLOT_DIR_ALE
+                )
+
+            if SHAP_CALCULATE:
+                print("calculating SHAP")
+                print("SHAP: calculating expected value")
+
+                size_reference_dataset = int(EXPLAIN_FREQUENCY * 0.01)
+                size_explained_dataset = int(EXPLAIN_FREQUENCY * 0.01)
+                random_sample_id = np.random.choice(
+                    new_states.shape[0], size=size_explained_dataset, replace=False
+                )
+
+                shap_explainer.fit(
+                    background_data=new_states,
+                    summarise_background=True,
+                    n_background_samples=size_reference_dataset,
+                )
+
+                print("SHAP: calculating feature importance")
+                shap_explanations = shap_explainer.explain(
+                    X=new_states[random_sample_id]
+                )
+                # shap.summary_plot(shap_explanations.shap_values, new_states[random_sample_id], feature_names)
+                shap.summary_plot(
+                    shap_values=shap_explanations.shap_values,
+                    feature_names=feature_names,
+                    show=False,
+                )
+                # plt.legend()
+                # leg = plt.gca().get_legend()
+                # leg.legendHandles[0].set_visible(False)
+
+                plt.savefig(os.path.join(PLOT_DIR_SHAP, f"{total_steps}.pdf"))
+                plt.clf()
+                plt.close("all")
+
+                ranked_feature_importance = shap_explanations.raw["importances"]["0"]
+                sorted_feature_importance = sort_feature_importance_SHAP(
+                    ranked_feature_importance
+                )
+                save_feature_importance_to_csv_SHAP(
+                    feature_order, sorted_feature_importance, total_steps, PLOT_DIR_SHAP
                 )
 
         agent.mode = "train"
