@@ -385,7 +385,7 @@ def train(config: ConfigFile, agent_name: str):
 
                 for i in feature_order:
                     feature_importance_array[i] = calculate_feature_importance(
-                        np.reshape(ale_explanations.ale_values[0], (-1,))
+                        np.reshape(ale_explanations.ale_values[i], (-1,))
                     )
 
                 save_feature_importance_to_csv_ale(
