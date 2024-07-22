@@ -216,10 +216,10 @@ def train(config: ConfigFile, agent_name: str):
     EXPLAIN_FREQUENCY = 5000
     GRID_SIZE = 5
     THREADING = False
-    ON_HPC = True
+    ON_HPC = False
 
-    PDP_CALCULATE = True
-    ALE_CALCULATE = True
+    PDP_CALCULATE = False
+    ALE_CALCULATE = False
     SHAP_CALCULATE = True
 
     if ON_HPC:
@@ -302,7 +302,7 @@ def train(config: ConfigFile, agent_name: str):
             predictor=model_function,
             link="identity",
             feature_names=feature_names,
-            task="regression",
+            task="regression"
         )
 
     agent.mode = "train"
@@ -370,9 +370,7 @@ def train(config: ConfigFile, agent_name: str):
                 plot_ale(ale_explanations, n_cols=3)
                 # TODO remove legend
                 # plt.legend("", frameon=False)
-                plt.legend()
-
-                plt.gca().get_legend().remove()
+                # plt.gca().get_legend().remove()
 
                 # if ALE values are in range [-1, 1]
                 if not (np.min(np.concatenate(ale_explanations.ale_values)) < -1) or (
@@ -396,7 +394,7 @@ def train(config: ConfigFile, agent_name: str):
                 print("calculating SHAP")
                 print("SHAP: calculating expected value")
 
-                size_reference_dataset = int(EXPLAIN_FREQUENCY * 0.01)
+                # size_reference_dataset = int(EXPLAIN_FREQUENCY * 0.01)
                 size_explained_dataset = int(EXPLAIN_FREQUENCY * 0.01)
                 random_sample_id = np.random.choice(
                     new_states.shape[0], size=size_explained_dataset, replace=False
@@ -404,8 +402,7 @@ def train(config: ConfigFile, agent_name: str):
 
                 shap_explainer.fit(
                     background_data=new_states,
-                    summarise_background=True,
-                    n_background_samples=size_reference_dataset,
+                    summarise_background='auto',
                 )
 
                 print("SHAP: calculating feature importance")
