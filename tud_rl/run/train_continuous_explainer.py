@@ -20,6 +20,7 @@ from time import sleep
 from ixai.explainer.pdp import BatchPDP
 from alibi.explainers import ALE, plot_ale, PartialDependence, plot_pd, KernelShap
 import shap
+from sklearn.tree import DecisionTreeRegressor, plot_tree
 
 import tud_rl.agents.continuous as agents
 from tud_rl import logger
@@ -44,6 +45,7 @@ from tud_rl.iPDP_helper.feature_importance import (
     save_feature_importance_to_csv_ale,
     sort_feature_importance_SHAP,
     save_feature_importance_to_csv_SHAP,
+    save_feature_importance_to_csv_tree
 )
 from tud_rl.iPDP_helper.multi_threading import (
     cast_state_buffer_to_array_of_dicts,
@@ -216,11 +218,12 @@ def train(config: ConfigFile, agent_name: str):
     EXPLAIN_FREQUENCY = 5000
     GRID_SIZE = 5
     THREADING = False
-    ON_HPC = True
+    ON_HPC = False
 
-    PDP_CALCULATE = True
-    ALE_CALCULATE = True
-    SHAP_CALCULATE = True
+    PDP_CALCULATE = False
+    ALE_CALCULATE = False
+    SHAP_CALCULATE = False
+    SURROGATE_TREE_CALCULATE = True
 
     if ON_HPC:
         EXPLAIN_FREQUENCY = 100000
@@ -238,6 +241,9 @@ def train(config: ConfigFile, agent_name: str):
         PLOT_DIR_SHAP = os.path.join(
             "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now, "SHAP/"
         )
+        PLOT_DIR_TREE = os.path.join(
+            "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now, "tree/"
+        )
 
         if PDP_CALCULATE:
             if not os.path.exists(PLOT_DIR_IPDP):
@@ -248,6 +254,9 @@ def train(config: ConfigFile, agent_name: str):
         if SHAP_CALCULATE:
             if not os.path.exists(PLOT_DIR_SHAP):
                 os.makedirs(PLOT_DIR_SHAP)
+        if SURROGATE_TREE_CALCULATE:
+            if not os.path.exists(PLOT_DIR_TREE):
+                os.makedirs(PLOT_DIR_TREE)
 
     else:
         PLOT_DIR_IPDP = os.path.join(
@@ -265,6 +274,11 @@ def train(config: ConfigFile, agent_name: str):
             now,
             "SHAP/",
         )
+        PLOT_DIR_TREE = os.path.join(
+            "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
+            now,
+            "tree/",
+        )
 
         if PDP_CALCULATE:
             if not os.path.exists(PLOT_DIR_IPDP):
@@ -275,26 +289,14 @@ def train(config: ConfigFile, agent_name: str):
         if SHAP_CALCULATE:
             if not os.path.exists(PLOT_DIR_SHAP):
                 os.makedirs(PLOT_DIR_SHAP)
+        if SURROGATE_TREE_CALCULATE:
+            if not os.path.exists(PLOT_DIR_TREE):
+                os.makedirs(PLOT_DIR_TREE)
 
     agent.mode = "test"
 
     feature_order = np.arange(start=0, stop=np.shape(state)[0])
     feature_order = feature_order.tolist()
-
-    # for i in feature_order:
-    #     if not os.path.exists(os.path.join(PLOT_DIR_IPDP, f"feature_{i}")):
-    #         os.makedirs(os.path.join(PLOT_DIR_IPDP, f"feature_{i}"))
-    #     if not os.path.exists(os.path.join(PLOT_DIR_ALE, f"feature_{i}")):
-    #         os.makedirs(os.path.join(PLOT_DIR_ALE, f"feature_{i}"))
-    #     if not os.path.exists(os.path.join(PLOT_DIR_SHAP, f"feature_{i}")):
-    #         os.makedirs(os.path.join(PLOT_DIR_SHAP, f"feature_{i}"))
-
-    # if not os.path.exists(os.path.join(PLOT_DIR_IPDP, "feature_importance")):
-    #     os.makedirs(os.path.join(PLOT_DIR_IPDP, "feature_importance"))
-    # if not os.path.exists(os.path.join(PLOT_DIR_ALE, "feature_importance")):
-    #     os.makedirs(os.path.join(PLOT_DIR_ALE, "feature_importance"))
-    # if not os.path.exists(os.path.join(PLOT_DIR_SHAP, "feature_importance")):
-    #     os.makedirs(os.path.join(PLOT_DIR_SHAP, "feature_importance"))
 
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
     model_function = ActionSelectionWrapperALE(
@@ -389,6 +391,7 @@ def train(config: ConfigFile, agent_name: str):
 
                 plot_ale(ale_explanations, n_cols=3)
                 # TODO remove legend
+                # maybe with creating a plt.figure() before calling plot_ale()?
                 # plt.legend("", frameon=False)
                 # plt.gca().get_legend().remove()
 
@@ -454,6 +457,28 @@ def train(config: ConfigFile, agent_name: str):
                 save_feature_importance_to_csv_SHAP(
                     feature_order, sorted_feature_importance, total_steps, PLOT_DIR_SHAP
                 )
+
+            if SURROGATE_TREE_CALCULATE:
+                # get current actions on new_states
+                new_actions = np.zeros(shape=np.shape(new_states)[0])
+                for i in range(np.shape(new_states)[0]):
+                    new_actions[i] = agent.select_action(new_states[i, :])
+
+                # initialize tree
+                surrogate_tree = DecisionTreeRegressor(max_depth=6)
+                # fit tree
+                surrogate_tree.fit(X=new_states, y=new_actions)
+
+                # gini importance
+                feature_importance = surrogate_tree.feature_importances_
+                save_feature_importance_to_csv_tree(feature_order, feature_importance, total_steps, PLOT_DIR_TREE)
+
+                # plot
+                plt.figure(figsize=(20,10))
+                plot_tree(decision_tree=surrogate_tree, feature_names=feature_names, max_depth=3, filled=True, fontsize=12, proportion=True)
+                plt.savefig(os.path.join(PLOT_DIR_TREE, f"{total_steps}.pdf"))
+                plt.clf()
+                plt.close("all")
 
         agent.mode = "train"
         # --------------------------------------------------------------------------------
