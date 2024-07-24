@@ -216,11 +216,11 @@ def train(config: ConfigFile, agent_name: str):
     EXPLAIN_FREQUENCY = 5000
     GRID_SIZE = 5
     THREADING = False
-    ON_HPC = True
+    ON_HPC = False
 
-    PDP_CALCULATE = True
+    PDP_CALCULATE = False
     ALE_CALCULATE = True
-    SHAP_CALCULATE = True
+    SHAP_CALCULATE = False
 
     if ON_HPC:
         EXPLAIN_FREQUENCY = 100000
@@ -238,6 +238,17 @@ def train(config: ConfigFile, agent_name: str):
         PLOT_DIR_SHAP = os.path.join(
             "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now, "SHAP/"
         )
+
+        if PDP_CALCULATE:
+            if not os.path.exists(PLOT_DIR_IPDP):
+                os.makedirs(PLOT_DIR_IPDP)
+        if ALE_CALCULATE:
+            if not os.path.exists(PLOT_DIR_ALE):
+                os.makedirs(PLOT_DIR_ALE)
+        if SHAP_CALCULATE:
+            if not os.path.exists(PLOT_DIR_SHAP):
+                os.makedirs(PLOT_DIR_SHAP)
+
     else:
         PLOT_DIR_IPDP = os.path.join(
             "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
@@ -255,25 +266,35 @@ def train(config: ConfigFile, agent_name: str):
             "SHAP/",
         )
 
+        if PDP_CALCULATE:
+            if not os.path.exists(PLOT_DIR_IPDP):
+                os.makedirs(PLOT_DIR_IPDP)
+        if ALE_CALCULATE:
+            if not os.path.exists(PLOT_DIR_ALE):
+                os.makedirs(PLOT_DIR_ALE)
+        if SHAP_CALCULATE:
+            if not os.path.exists(PLOT_DIR_SHAP):
+                os.makedirs(PLOT_DIR_SHAP)
+
     agent.mode = "test"
 
     feature_order = np.arange(start=0, stop=np.shape(state)[0])
     feature_order = feature_order.tolist()
 
-    for i in feature_order:
-        if not os.path.exists(os.path.join(PLOT_DIR_IPDP, f"feature_{i}")):
-            os.makedirs(os.path.join(PLOT_DIR_IPDP, f"feature_{i}"))
-        if not os.path.exists(os.path.join(PLOT_DIR_ALE, f"feature_{i}")):
-            os.makedirs(os.path.join(PLOT_DIR_ALE, f"feature_{i}"))
-        if not os.path.exists(os.path.join(PLOT_DIR_SHAP, f"feature_{i}")):
-            os.makedirs(os.path.join(PLOT_DIR_SHAP, f"feature_{i}"))
+    # for i in feature_order:
+    #     if not os.path.exists(os.path.join(PLOT_DIR_IPDP, f"feature_{i}")):
+    #         os.makedirs(os.path.join(PLOT_DIR_IPDP, f"feature_{i}"))
+    #     if not os.path.exists(os.path.join(PLOT_DIR_ALE, f"feature_{i}")):
+    #         os.makedirs(os.path.join(PLOT_DIR_ALE, f"feature_{i}"))
+    #     if not os.path.exists(os.path.join(PLOT_DIR_SHAP, f"feature_{i}")):
+    #         os.makedirs(os.path.join(PLOT_DIR_SHAP, f"feature_{i}"))
 
-    if not os.path.exists(os.path.join(PLOT_DIR_IPDP, "feature_importance")):
-        os.makedirs(os.path.join(PLOT_DIR_IPDP, "feature_importance"))
-    if not os.path.exists(os.path.join(PLOT_DIR_ALE, "feature_importance")):
-        os.makedirs(os.path.join(PLOT_DIR_ALE, "feature_importance"))
-    if not os.path.exists(os.path.join(PLOT_DIR_SHAP, "feature_importance")):
-        os.makedirs(os.path.join(PLOT_DIR_SHAP, "feature_importance"))
+    # if not os.path.exists(os.path.join(PLOT_DIR_IPDP, "feature_importance")):
+    #     os.makedirs(os.path.join(PLOT_DIR_IPDP, "feature_importance"))
+    # if not os.path.exists(os.path.join(PLOT_DIR_ALE, "feature_importance")):
+    #     os.makedirs(os.path.join(PLOT_DIR_ALE, "feature_importance"))
+    # if not os.path.exists(os.path.join(PLOT_DIR_SHAP, "feature_importance")):
+    #     os.makedirs(os.path.join(PLOT_DIR_SHAP, "feature_importance"))
 
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
     model_function = ActionSelectionWrapperALE(
@@ -398,7 +419,7 @@ def train(config: ConfigFile, agent_name: str):
                 print("SHAP: calculating expected value")
 
                 # size_reference_dataset = int(EXPLAIN_FREQUENCY * 0.01)
-                size_explained_dataset = int(EXPLAIN_FREQUENCY * 0.01)
+                size_explained_dataset = int(EXPLAIN_FREQUENCY * 0.005)
                 random_sample_id = np.random.choice(
                     new_states.shape[0], size=size_explained_dataset, replace=False
                 )
