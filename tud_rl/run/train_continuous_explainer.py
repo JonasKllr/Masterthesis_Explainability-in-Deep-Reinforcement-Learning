@@ -354,15 +354,15 @@ def train(config: ConfigFile, agent_name: str):
 
             if ALE_CALCULATE:
                 print("calculating ALE")
-                grid_points_dict = {}
-                for i in feature_order:
+                # grid_points_dict = {}
+                # for i in feature_order:
 
-                    min_feature_value = np.min(new_states[:, i])
-                    max_feature_value = np.max(new_states[:, i])
-                    grid_points = np.linspace(
-                        start=min_feature_value, stop=max_feature_value, num=10
-                    )
-                    grid_points_dict[i] = grid_points
+                #     min_feature_value = np.min(new_states[:, i])
+                #     max_feature_value = np.max(new_states[:, i])
+                #     grid_points = np.linspace(
+                #         start=min_feature_value, stop=max_feature_value, num=10
+                #     )
+                #     grid_points_dict[i] = grid_points
 
                 # ale_explanations = ale_explainer.explain(X=new_states, grid_points=grid_points_dict)
                 ale_explanations = ale_explainer.explain(X=new_states)
@@ -373,9 +373,12 @@ def train(config: ConfigFile, agent_name: str):
                 # plt.gca().get_legend().remove()
 
                 # if ALE values are in range [-1, 1]
-                if not (np.min(np.concatenate(ale_explanations.ale_values)) < -1) or (
-                    np.max(np.concatenate(ale_explanations.ale_values)) > 1
-                ):
+                min_ale_value = np.min(np.concatenate(ale_explanations.ale_values))
+                max_ale_value = np.max(np.concatenate(ale_explanations.ale_values))
+
+                if (min_ale_value < -1) or (max_ale_value > 1):
+                    plt.ylim(min_ale_value, max_ale_value)
+                else:                    
                     plt.ylim(-1, 1)
 
                 plt.savefig(os.path.join(PLOT_DIR_ALE, f"{total_steps}.pdf"))
