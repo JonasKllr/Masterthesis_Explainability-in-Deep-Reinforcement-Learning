@@ -218,9 +218,9 @@ def train(config: ConfigFile, agent_name: str):
     THREADING = False
     ON_HPC = False
 
-    PDP_CALCULATE = False
+    PDP_CALCULATE = True
     ALE_CALCULATE = True
-    SHAP_CALCULATE = False
+    SHAP_CALCULATE = True
 
     if ON_HPC:
         EXPLAIN_FREQUENCY = 100000
@@ -349,8 +349,6 @@ def train(config: ConfigFile, agent_name: str):
                 agent.replay_buffer.s, agent.replay_buffer.ptr, EXPLAIN_FREQUENCY
             )
 
-            feature_importance_array = [None] * len(feature_order)
-
             if PDP_CALCULATE:
                 print("calculating PDP")
                 pdp_explanations = pdp_explainer.explain(
@@ -363,14 +361,15 @@ def train(config: ConfigFile, agent_name: str):
                 plt.savefig(os.path.join(PLOT_DIR_IPDP, f"{total_steps}.pdf"))
                 plt.clf()
                 plt.close("all")
-
+                
+                feature_importance_array_pdp = [None] * len(feature_order)
                 for i in feature_order:
-                    feature_importance_array[i] = calculate_feature_importance(
+                    feature_importance_array_pdp[i] = calculate_feature_importance(
                         y_values=pdp_explanations.pd_values[i][0, :],
                     )
 
                 save_feature_importance_to_csv_pdp(
-                    feature_order, feature_importance_array, total_steps, PLOT_DIR_IPDP
+                    feature_order, feature_importance_array_pdp, total_steps, PLOT_DIR_IPDP
                 )
 
             if ALE_CALCULATE:
@@ -405,13 +404,14 @@ def train(config: ConfigFile, agent_name: str):
                 plt.savefig(os.path.join(PLOT_DIR_ALE, f"{total_steps}.pdf"))
                 plt.close("all")
 
+                feature_importance_array_ale = [None] * len(feature_order)
                 for i in feature_order:
-                    feature_importance_array[i] = calculate_feature_importance(
+                    feature_importance_array_ale[i] = calculate_feature_importance(
                         np.reshape(ale_explanations.ale_values[i], (-1,))
                     )
 
                 save_feature_importance_to_csv_ale(
-                    feature_order, feature_importance_array, total_steps, PLOT_DIR_ALE
+                    feature_order, feature_importance_array_ale, total_steps, PLOT_DIR_ALE
                 )
 
             if SHAP_CALCULATE:
