@@ -16,6 +16,11 @@ import torch
 from ixai.explainer.pdp import IncrementalPDP
 from ixai.storage.ordered_reservoir_storage import OrderedReservoirStorage
 
+from tud_rl.iPDP_helper.feature_importance import (
+    calculate_feature_importance_iPDP,
+    save_feature_importance_to_csv_pdp,
+)
+
 import tud_rl.agents.continuous as agents
 from tud_rl import logger
 from tud_rl.agents.base import _Agent
@@ -24,11 +29,6 @@ from tud_rl.common.logging_func import EpochLogger
 from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
 from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapper
-
-from tud_rl.iPDP_helper.feature_importance import (
-    calculate_feature_importance_iPDP,
-    save_feature_importance_to_csv_pdp,
-)
 
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
