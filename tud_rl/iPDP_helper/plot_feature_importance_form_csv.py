@@ -7,7 +7,7 @@ def get_last_folder_name(path):
     return os.path.basename(os.path.normpath(path))
 
 
-DIR_PLOTS = "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/ple_ale_SHAP_interrupted/background-300_explain_1000/plots/2024-07-22_21-32/"
+DIR_PLOTS = "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/ple_ale_SHAP_tree/tree_gini-imp/plots/2024-07-24_17-55/"
 
 for dirpath, dirnames, filenames in os.walk(DIR_PLOTS):
     if not dirnames:  # Only consider last-level folders
@@ -44,6 +44,12 @@ for dirpath, dirnames, filenames in os.walk(DIR_PLOTS):
             elif last_folder_name == "SHAP":
                 plt.title(
                     r"$\bf{SHAP-based\ Feature\ Importance}$"
+                    + "\n"
+                    + rf"exponentially smoothed with $\alpha = \dfrac{{2}}{{{span}+1}}$"
+                )
+            elif last_folder_name == "tree":
+                plt.title(
+                    r"$\bf{DecisionTree-based\ Feature\ Importance}$"
                     + "\n"
                     + rf"exponentially smoothed with $\alpha = \dfrac{{2}}{{{span}+1}}$"
                 )
