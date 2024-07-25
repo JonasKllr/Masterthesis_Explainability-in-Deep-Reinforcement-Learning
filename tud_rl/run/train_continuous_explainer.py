@@ -9,13 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-
 import gym
-import shap
 
-from alibi.explainers import ALE, plot_ale, PartialDependence, plot_pd, KernelShap
-from sklearn.tree import DecisionTreeRegressor, plot_tree
-from sklearn.inspection import permutation_importance
 
 import tud_rl.agents.continuous as agents
 from tud_rl import logger
@@ -25,6 +20,11 @@ from tud_rl.common.logging_func import EpochLogger
 from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
 from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapperAlibi
+
+import shap
+from alibi.explainers import ALE, plot_ale, PartialDependence, plot_pd, KernelShap
+from sklearn.tree import DecisionTreeRegressor, plot_tree
+from sklearn.inspection import permutation_importance
 
 from tud_rl.iPDP_helper.feature_importance import (
     calculate_feature_importance,
