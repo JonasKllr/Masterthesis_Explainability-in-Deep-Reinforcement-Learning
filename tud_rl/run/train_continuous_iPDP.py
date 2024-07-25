@@ -11,10 +11,7 @@ import numpy as np
 import os
 import pandas as pd
 
-import torch.multiprocessing as multiprocessing
 import torch
-
-from time import sleep
 
 from ixai.explainer.pdp import IncrementalPDP
 from ixai.storage.ordered_reservoir_storage import OrderedReservoirStorage
@@ -28,18 +25,9 @@ from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
 from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapper
 
-from tud_rl.iPDP_helper.validate_action_selection_wrapper import (
-    vaildate_action_selection_wrapper,
-)
 from tud_rl.iPDP_helper.feature_importance import (
-    calculate_feature_importance,
-    plot_feature_importance,
+    calculate_feature_importance_iPDP,
     save_feature_importance_to_csv_pdp,
-)
-from tud_rl.iPDP_helper.multi_threading import (
-    cast_state_buffer_to_array_of_dicts,
-    explain_one_threading,
-    get_new_states_in_buffer,
 )
 
 
@@ -206,7 +194,7 @@ def train(config: ConfigFile, agent_name: str):
 
     PLOT_FREQUENCY_IPDP = 5000
     GRID_SIZE = 5
-    THREADING = True
+    THREADING = False
     ON_HPC = False
 
     if ON_HPC:
@@ -233,9 +221,6 @@ def train(config: ConfigFile, agent_name: str):
     for i in feature_order:
         if not os.path.exists(os.path.join(PLOT_DIR_IPDP, f"feature_{i}")):
             os.makedirs(os.path.join(PLOT_DIR_IPDP, f"feature_{i}"))
-
-    if not os.path.exists(os.path.join(PLOT_DIR_IPDP, "feature_importance")):
-        os.makedirs(os.path.join(PLOT_DIR_IPDP, "feature_importance"))
 
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
     model_function = ActionSelectionWrapper(agent.select_action)
@@ -274,10 +259,6 @@ def train(config: ConfigFile, agent_name: str):
     }
     plt.rcParams.update(params)
 
-    # for validation
-    # output_agent_array = []
-    # output_wrapper_array = []
-
     agent.mode = "train"
     # --------------------------------------------------------------------------------
     # ----------------------------- init iPDP objects --------------------------------
@@ -299,53 +280,11 @@ def train(config: ConfigFile, agent_name: str):
         state_iPDP = dict(enumerate(state))
 
         # update iPDP for every feaute
-        # for explainer in incremental_explainer_array:
-        #     explainer.explain_one(state_iPDP)
-
-        # for validation
-        # if total_steps > config.act_start_step:
-        #     output_agent, output_wrapper = vaildate_action_selection_wrapper(agent, incremental_explainer, state, state_iPDP)
-        #     output_agent_array.append(output_agent)
-        #     output_wrapper_array.append(output_wrapper)
+        for explainer in incremental_explainer_array:
+            explainer.explain_one(state_iPDP)
 
         # plot iPDP and feature importance for every PLOT_FREQUENCY_IPDP
         if total_steps != 0 and total_steps % PLOT_FREQUENCY_IPDP == 0:
-            print("getting new states")
-            new_states = get_new_states_in_buffer(
-                agent.replay_buffer.s, agent.replay_buffer.ptr, PLOT_FREQUENCY_IPDP
-            )
-            print("casting states")
-            state_dict_array = cast_state_buffer_to_array_of_dicts(new_states)
-
-            if THREADING:
-                processes = []
-                queue = multiprocessing.Manager().Queue()
-
-                for index, explainer in enumerate(incremental_explainer_array):
-                    # explain_one_threading(index, explainer, state_dict_array, queue)
-                    
-                    process = multiprocessing.Process(
-                        target=explain_one_threading,
-                        args=(index, explainer, state_dict_array, queue),
-                    )
-                    processes.append(process)
-                    process.start()
-
-                # Collect the updated explainers from the queue
-                updated_explainers = [None] * len(incremental_explainer_array)
-                for _ in range(len(incremental_explainer_array)):
-                    index, updated_explainer = queue.get()
-                    updated_explainers[index] = updated_explainer
-
-                for process in processes:
-                    process.join()
-
-                incremental_explainer_array = updated_explainers
-            else:
-                # update iPDP for every feaute
-                for explainer in incremental_explainer_array:
-                    for state_dict in state_dict_array:
-                        explainer.explain_one(state_dict)
 
             feature_importance_array = [None] * len(feature_order)
             for i, explainer in enumerate(incremental_explainer_array):
@@ -376,15 +315,11 @@ def train(config: ConfigFile, agent_name: str):
                 )
                 plt.clf()
 
-                feature_importance_array[i] = calculate_feature_importance(
+                feature_importance_array[i] = calculate_feature_importance_iPDP(
                     explainer.pdp_x_tracker.get(),
                     explainer.pdp_y_tracker.get(),
                 )
 
-            # plot_feature_importance(feature_order, feature_importance_array)
-            # plt.savefig(
-            #     os.path.join(PLOT_DIR_IPDP, "feature_importance", f"{total_steps}.pdf")
-            # )
             plt.clf()
             plt.close("all")
 

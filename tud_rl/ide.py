@@ -30,6 +30,7 @@ ACTOR_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2
 CRITIC_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
 
 COMPUTE_iPDP = True
+COMPUTE_BATCH_EXPLAINERS = False
 # ------------------------------------------------------------
 # ------------------------------------------------------------
 
@@ -65,11 +66,13 @@ if ACTOR_WEIGHTS is not None:
 config.max_episode_handler()
 
 if TASK == "train":
-    if COMPUTE_iPDP == True:
+    if COMPUTE_BATCH_EXPLAINERS == True:
         cont_explainer.train(
             config=config,
             agent_name=AGENT_NAME,
         )
+    elif COMPUTE_iPDP == True:
+        cont_iPDP.train(config=config, agent_name=AGENT_NAME)
     else:
         if discrete:
             discr.train(config, AGENT_NAME)
