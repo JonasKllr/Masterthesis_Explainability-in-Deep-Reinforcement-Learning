@@ -21,6 +21,7 @@ from ixai.explainer.pdp import BatchPDP
 from alibi.explainers import ALE, plot_ale, PartialDependence, plot_pd, KernelShap
 import shap
 from sklearn.tree import DecisionTreeRegressor, plot_tree
+from sklearn.inspection import permutation_importance
 
 import tud_rl.agents.continuous as agents
 from tud_rl import logger
@@ -45,7 +46,8 @@ from tud_rl.iPDP_helper.feature_importance import (
     save_feature_importance_to_csv_ale,
     sort_feature_importance_SHAP,
     save_feature_importance_to_csv_SHAP,
-    save_feature_importance_to_csv_tree
+    save_feature_importance_to_csv_tree,
+    save_r_squared_to_csv_tree
 )
 from tud_rl.iPDP_helper.multi_threading import (
     cast_state_buffer_to_array_of_dicts,
@@ -218,11 +220,11 @@ def train(config: ConfigFile, agent_name: str):
     EXPLAIN_FREQUENCY = 5000
     GRID_SIZE = 5
     THREADING = False
-    ON_HPC = True
+    ON_HPC = False
 
-    PDP_CALCULATE = True
-    ALE_CALCULATE = True
-    SHAP_CALCULATE = True
+    PDP_CALCULATE = False
+    ALE_CALCULATE = False
+    SHAP_CALCULATE = False
     SURROGATE_TREE_CALCULATE = True
 
     if ON_HPC:
@@ -422,7 +424,7 @@ def train(config: ConfigFile, agent_name: str):
                 print("SHAP: calculating expected value")
 
                 # size_reference_dataset = int(EXPLAIN_FREQUENCY * 0.01)
-                size_explained_dataset = int(300)
+                size_explained_dataset = int(200)
                 random_sample_id = np.random.choice(
                     new_states.shape[0], size=size_explained_dataset, replace=False
                 )
@@ -459,6 +461,7 @@ def train(config: ConfigFile, agent_name: str):
                 )
 
             if SURROGATE_TREE_CALCULATE:
+                print("calculating tree")
                 # get current actions on new_states
                 new_actions = np.zeros(shape=np.shape(new_states)[0])
                 for i in range(np.shape(new_states)[0]):
@@ -470,15 +473,44 @@ def train(config: ConfigFile, agent_name: str):
                 surrogate_tree.fit(X=new_states, y=new_actions)
 
                 # gini importance
-                feature_importance = surrogate_tree.feature_importances_
-                save_feature_importance_to_csv_tree(feature_order, feature_importance, total_steps, PLOT_DIR_TREE)
+                # feature_importance = surrogate_tree.feature_importances_
+                # save_feature_importance_to_csv_tree(feature_order, feature_importance, total_steps, PLOT_DIR_TREE)
 
-                # plot
-                plt.figure(figsize=(20,10))
-                plot_tree(decision_tree=surrogate_tree, feature_names=feature_names, max_depth=3, filled=True, fontsize=12, proportion=True)
-                plt.savefig(os.path.join(PLOT_DIR_TREE, f"{total_steps}.pdf"))
+                # permutation feature importance
+                feature_importance = permutation_importance(estimator=surrogate_tree, X=new_states, y=new_actions, n_repeats=5, random_state=42, n_jobs=-1)
+                sorted_importances_idx = feature_importance.importances_mean.argsort()
+
+                # casting feature_names to ndarry just for the following plotting
+                feature_names_np = np.array(feature_names)
+
+                # plot feature importance
+                importances = pd.DataFrame(
+                    feature_importance.importances[sorted_importances_idx].T,
+                    columns=feature_names_np[sorted_importances_idx],
+                )
+                ax = importances.plot.box(vert=False, whis=10)
+                ax.set_title("Permutation Importances")
+                ax.axvline(x=0, color="k", linestyle="--")
+                ax.set_xlabel("Decrease in accuracy score")
+                ax.figure.tight_layout()
+                plt.savefig(os.path.join(PLOT_DIR_TREE, f"{total_steps}_FI.pdf"))
                 plt.clf()
                 plt.close("all")
+
+                # plot tree
+                plt.figure(figsize=(20,10))
+                plot_tree(decision_tree=surrogate_tree, feature_names=feature_names, max_depth=3, filled=True, fontsize=12, proportion=True)
+                plt.savefig(os.path.join(PLOT_DIR_TREE, f"{total_steps}_tree.pdf"))
+                plt.clf()
+                plt.close("all")
+
+                mean_feature_imortance = feature_importance.importances_mean
+                save_feature_importance_to_csv_tree(feature_order, mean_feature_imortance, total_steps, PLOT_DIR_TREE)
+
+                # coefficient of determination
+                r_squared = surrogate_tree.score(X=new_states, y=new_actions)
+                save_r_squared_to_csv_tree(r_squared, total_steps, save_dir=PLOT_DIR_TREE)
+
 
         agent.mode = "train"
         # --------------------------------------------------------------------------------

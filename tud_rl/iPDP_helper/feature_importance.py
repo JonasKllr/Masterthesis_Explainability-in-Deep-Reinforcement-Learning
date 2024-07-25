@@ -119,6 +119,26 @@ def save_feature_importance_to_csv_tree(
         np.savetxt(file, array_to_save.reshape(1, -1), delimiter=",", fmt="%s")
 
 
+
+
+
+def save_r_squared_to_csv_tree(r_squared: float, total_steps: int, save_dir: str):
+    file_dir = os.path.join(save_dir, "r-squared_tree.csv")
+    array_to_save = np.append(total_steps, r_squared)
+
+    try:
+        with open(file_dir, "x") as file:
+            headers = ["time_step"] + ["r-squared"]
+            np.savetxt(file, [headers], delimiter=", ", fmt="%s")
+    except FileExistsError:
+        pass
+
+    with open(file_dir, "a") as file:
+        np.savetxt(file, array_to_save.reshape(1, -1), delimiter=",", fmt="%s")
+
+
+
+
 if __name__ == "__main__":
     FEATURE_ORDER = [0, 1, 2, 3, 4, 5]
     FEATURE_IMPORTANCE_ARRAY = [0.5, 0.5, 0.1, 0.5, 0.6, 0.6]
