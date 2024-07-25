@@ -194,8 +194,7 @@ def train(config: ConfigFile, agent_name: str):
 
     PLOT_FREQUENCY_IPDP = 5000
     GRID_SIZE = 5
-    THREADING = False
-    ON_HPC = False
+    ON_HPC = True
 
     if ON_HPC:
         PLOT_FREQUENCY_IPDP = 100000
