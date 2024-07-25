@@ -1,25 +1,19 @@
 import csv
 import datetime
+import os
 import pickle
 import random
 import shutil
 import time
-
-import gym
 import matplotlib.pyplot as plt
 import numpy as np
-
-import os
 import pandas as pd
-
-import multiprocessing as multiprocessing
 import torch
 
-from time import sleep
-
-from ixai.explainer.pdp import BatchPDP
-from alibi.explainers import ALE, plot_ale, PartialDependence, plot_pd, KernelShap
+import gym
 import shap
+
+from alibi.explainers import ALE, plot_ale, PartialDependence, plot_pd, KernelShap
 from sklearn.tree import DecisionTreeRegressor, plot_tree
 from sklearn.inspection import permutation_importance
 
@@ -30,18 +24,10 @@ from tud_rl.common.configparser import ConfigFile
 from tud_rl.common.logging_func import EpochLogger
 from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
-from tud_rl.wrappers.action_selection_wrapper import (
-    ActionSelectionWrapper,
-    ActionSelectionWrapperALE,
-)
+from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapperAlibi
 
-from tud_rl.iPDP_helper.validate_action_selection_wrapper import (
-    vaildate_action_selection_wrapper,
-)
 from tud_rl.iPDP_helper.feature_importance import (
     calculate_feature_importance,
-    calculate_feature_importance_ale,
-    plot_feature_importance,
     save_feature_importance_to_csv_pdp,
     save_feature_importance_to_csv_ale,
     sort_feature_importance_SHAP,
@@ -49,11 +35,7 @@ from tud_rl.iPDP_helper.feature_importance import (
     save_feature_importance_to_csv_tree,
     save_r_squared_to_csv_tree,
 )
-from tud_rl.iPDP_helper.multi_threading import (
-    cast_state_buffer_to_array_of_dicts,
-    explain_one_threading_batch,
-    get_new_states_in_buffer,
-)
+from tud_rl.iPDP_helper.get_new_states import get_new_states_in_buffer
 from tud_rl.iPDP_helper.timer_to_csv import save_timer_to_csv
 
 
@@ -299,7 +281,7 @@ def train(config: ConfigFile, agent_name: str):
 
     agent.mode = "test"
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
-    model_function = ActionSelectionWrapperALE(
+    model_function = ActionSelectionWrapperAlibi(
         action_selection_function=agent.select_action
     )
     agent.mode = "train"

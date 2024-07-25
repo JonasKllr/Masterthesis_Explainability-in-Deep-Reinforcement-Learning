@@ -34,7 +34,7 @@ class ActionSelectionWrapper(Wrapper):
         return self.convert_arr_output_to_dict(output)
 
 
-class ActionSelectionWrapperALE:
+class ActionSelectionWrapperAlibi:
     def __init__(self, action_selection_function) -> None:
         self.action_selection_function = action_selection_function
 
