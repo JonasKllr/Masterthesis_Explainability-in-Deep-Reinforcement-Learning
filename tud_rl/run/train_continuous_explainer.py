@@ -461,7 +461,7 @@ def train(config: ConfigFile, agent_name: str):
                 for i in range(np.shape(new_states)[0]):
                     new_actions[i] = agent.select_action(new_states[i, :])
 
-                surrogate_tree = DecisionTreeRegressor(max_depth=6)
+                surrogate_tree = DecisionTreeRegressor(max_depth=10)
                 surrogate_tree.fit(X=new_states, y=new_actions)
 
                 # permutation feature importance
