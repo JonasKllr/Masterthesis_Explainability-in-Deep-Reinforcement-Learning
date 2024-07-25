@@ -215,12 +215,9 @@ def train(config: ConfigFile, agent_name: str):
     episode_return = np.zeros((agent.N_agents, 1)) if agent.is_multi else 0.0
 
     # --------------------------------------------------------------------------------
-    # ----------------------------- init iPDP objects --------------------------------
+    # ----------------------------- init explanations --------------------------------
     # --------------------------------------------------------------------------------
 
-    EXPLAIN_FREQUENCY = 5000
-    GRID_SIZE = 5
-    THREADING = False
     ON_HPC = False
 
     PDP_CALCULATE = False
@@ -228,6 +225,7 @@ def train(config: ConfigFile, agent_name: str):
     SHAP_CALCULATE = True
     SURROGATE_TREE_CALCULATE = False
 
+    EXPLAIN_FREQUENCY = 5000
     if ON_HPC:
         EXPLAIN_FREQUENCY = 100000
 
@@ -235,7 +233,7 @@ def train(config: ConfigFile, agent_name: str):
     now = now.strftime("%Y-%m-%d_%H-%M")
 
     if ON_HPC:
-        PLOT_DIR_IPDP = os.path.join(
+        PLOT_DIR_PDP = os.path.join(
             "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now, "pdp/"
         )
         PLOT_DIR_ALE = os.path.join(
@@ -249,8 +247,8 @@ def train(config: ConfigFile, agent_name: str):
         )
 
         if PDP_CALCULATE:
-            if not os.path.exists(PLOT_DIR_IPDP):
-                os.makedirs(PLOT_DIR_IPDP)
+            if not os.path.exists(PLOT_DIR_PDP):
+                os.makedirs(PLOT_DIR_PDP)
         if ALE_CALCULATE:
             if not os.path.exists(PLOT_DIR_ALE):
                 os.makedirs(PLOT_DIR_ALE)
@@ -262,7 +260,7 @@ def train(config: ConfigFile, agent_name: str):
                 os.makedirs(PLOT_DIR_TREE)
 
     else:
-        PLOT_DIR_IPDP = os.path.join(
+        PLOT_DIR_PDP = os.path.join(
             "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
             now,
             "pdp/",
@@ -284,8 +282,8 @@ def train(config: ConfigFile, agent_name: str):
         )
 
         if PDP_CALCULATE:
-            if not os.path.exists(PLOT_DIR_IPDP):
-                os.makedirs(PLOT_DIR_IPDP)
+            if not os.path.exists(PLOT_DIR_PDP):
+                os.makedirs(PLOT_DIR_PDP)
         if ALE_CALCULATE:
             if not os.path.exists(PLOT_DIR_ALE):
                 os.makedirs(PLOT_DIR_ALE)
@@ -296,15 +294,15 @@ def train(config: ConfigFile, agent_name: str):
             if not os.path.exists(PLOT_DIR_TREE):
                 os.makedirs(PLOT_DIR_TREE)
 
-    agent.mode = "test"
-
     feature_order = np.arange(start=0, stop=np.shape(state)[0])
     feature_order = feature_order.tolist()
 
+    agent.mode = "test"
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
     model_function = ActionSelectionWrapperALE(
         action_selection_function=agent.select_action
     )
+    agent.mode = "train"
 
     feature_names = []
     for i in feature_order:
@@ -320,25 +318,24 @@ def train(config: ConfigFile, agent_name: str):
     if SURROGATE_TREE_CALCULATE:
         tree_timer = 0.0
 
-    agent.mode = "train"
     # --------------------------------------------------------------------------------
-    # ----------------------------- init iPDP objects --------------------------------
+    # ----------------------------- init explanations --------------------------------
     # --------------------------------------------------------------------------------
 
     # main loop
     for total_steps in range(config.timesteps):
 
         episode_steps += 1
+
+        # --------------------------------------------------------------------------------
+        # ------------- explanations -----------------------------------------------------
+        # --------------------------------------------------------------------------------
         if not ON_HPC:
             print(total_steps)
 
-        # --------------------------------------------------------------------------------
-        # ------------- iPDP -------------------------------------------------------------
-        # --------------------------------------------------------------------------------
-        agent.mode = "test"
-
         # calculate explanations for every EXPLAIN_FREQUENCY
         if total_steps != 0 and total_steps % EXPLAIN_FREQUENCY == 0:
+            agent.mode = "test"
             new_states = get_new_states_in_buffer(
                 agent.replay_buffer.s, agent.replay_buffer.ptr, EXPLAIN_FREQUENCY
             )
@@ -353,6 +350,7 @@ def train(config: ConfigFile, agent_name: str):
                     target_names=["Partial Dependence"],
                 )
 
+                GRID_SIZE = 5
                 pdp_explanations = pdp_explainer.explain(
                     X=new_states,
                     features=None,
@@ -360,7 +358,7 @@ def train(config: ConfigFile, agent_name: str):
                     grid_resolution=GRID_SIZE,
                 )
                 plot_pd(pdp_explanations, pd_limits=[-1.0, 1.0])
-                plt.savefig(os.path.join(PLOT_DIR_IPDP, f"{total_steps}.pdf"))
+                plt.savefig(os.path.join(PLOT_DIR_PDP, f"{total_steps}.pdf"))
                 plt.clf()
                 plt.close("all")
 
@@ -373,13 +371,13 @@ def train(config: ConfigFile, agent_name: str):
                     feature_order,
                     feature_importance_array_pdp,
                     total_steps,
-                    PLOT_DIR_IPDP,
+                    PLOT_DIR_PDP,
                 )
 
                 pdp_end_time = time.time()
                 pdp_time_elapsed = pdp_end_time - pdp_start_time
                 pdp_timer += pdp_time_elapsed
-                save_timer_to_csv(pdp_timer, total_steps, PLOT_DIR_IPDP)
+                save_timer_to_csv(pdp_timer, total_steps, PLOT_DIR_PDP)
 
             if ALE_CALCULATE:
                 print("calculating ALE")
@@ -406,7 +404,6 @@ def train(config: ConfigFile, agent_name: str):
                     plt.ylim(min_ale_value, max_ale_value)
                 else:
                     plt.ylim(-1, 1)
-
                 plt.savefig(os.path.join(PLOT_DIR_ALE, f"{total_steps}.pdf"))
                 plt.close("all")
 
@@ -415,7 +412,6 @@ def train(config: ConfigFile, agent_name: str):
                     feature_importance_array_ale[i] = calculate_feature_importance(
                         np.reshape(ale_explanations.ale_values[i], (-1,))
                     )
-
                 save_feature_importance_to_csv_ale(
                     feature_order,
                     feature_importance_array_ale,
@@ -438,30 +434,25 @@ def train(config: ConfigFile, agent_name: str):
                     feature_names=feature_names,
                     task="regression",
                 )
-
-                # size_reference_dataset = int(EXPLAIN_FREQUENCY * 0.01)
-                size_explained_dataset = int(200)
-                random_sample_id = np.random.choice(
-                    new_states.shape[0], size=size_explained_dataset, replace=False
-                )
-
                 shap_explainer.fit(
                     background_data=new_states,
                     summarise_background=True,
                     n_background_samples=200,
                 )
 
+                random_sample_id = np.random.choice(
+                    new_states.shape[0], size=200, replace=False
+                )
                 shap_explanations = shap_explainer.explain(
                     X=new_states[random_sample_id]
                 )
-                
+
                 shap.summary_plot(
                     shap_values=shap_explanations.shap_values[0],
                     feature_names=feature_names,
                     show=False,
-                    plot_type="bar"
+                    plot_type="bar",
                 )
-
                 plt.savefig(os.path.join(PLOT_DIR_SHAP, f"{total_steps}.pdf"))
                 plt.clf()
                 plt.close("all")
@@ -488,14 +479,8 @@ def train(config: ConfigFile, agent_name: str):
                 for i in range(np.shape(new_states)[0]):
                     new_actions[i] = agent.select_action(new_states[i, :])
 
-                # initialize tree
                 surrogate_tree = DecisionTreeRegressor(max_depth=6)
-                # fit tree
                 surrogate_tree.fit(X=new_states, y=new_actions)
-
-                # gini importance
-                # feature_importance = surrogate_tree.feature_importances_
-                # save_feature_importance_to_csv_tree(feature_order, feature_importance, total_steps, PLOT_DIR_TREE)
 
                 # permutation feature importance
                 feature_importance = permutation_importance(
@@ -555,9 +540,9 @@ def train(config: ConfigFile, agent_name: str):
                 tree_timer += tree_time_elapsed
                 save_timer_to_csv(tree_timer, total_steps, PLOT_DIR_TREE)
 
-        agent.mode = "train"
+            agent.mode = "train"
         # --------------------------------------------------------------------------------
-        # ------------- iPDP -------------------------------------------------------------
+        # ------------- explanations -----------------------------------------------------
         # --------------------------------------------------------------------------------
 
         # select action
