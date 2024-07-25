@@ -438,7 +438,8 @@ def train(config: ConfigFile, agent_name: str):
 
                 shap_explainer.fit(
                     background_data=new_states,
-                    summarise_background="auto",
+                    summarise_background=True,
+                    n_background_samples = 200
                 )
 
                 print("SHAP: calculating feature importance")
