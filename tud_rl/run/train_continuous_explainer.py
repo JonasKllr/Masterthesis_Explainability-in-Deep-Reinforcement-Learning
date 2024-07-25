@@ -47,7 +47,7 @@ from tud_rl.iPDP_helper.feature_importance import (
     sort_feature_importance_SHAP,
     save_feature_importance_to_csv_SHAP,
     save_feature_importance_to_csv_tree,
-    save_r_squared_to_csv_tree
+    save_r_squared_to_csv_tree,
 )
 from tud_rl.iPDP_helper.multi_threading import (
     cast_state_buffer_to_array_of_dicts,
@@ -310,26 +310,6 @@ def train(config: ConfigFile, agent_name: str):
         feature_name = f"feature_{i}"
         feature_names.append(feature_name)
 
-    if PDP_CALCULATE:
-        pdp_explainer = PartialDependence(
-            predictor=model_function,
-            feature_names=feature_names,
-            target_names=["Partial Dependence"],
-        )
-
-    if ALE_CALCULATE:
-        ale_explainer = ALE(
-            predictor=model_function, feature_names=feature_names, target_names=["ALE"]
-        )
-
-    if SHAP_CALCULATE:
-        shap_explainer = KernelShap(
-            predictor=model_function,
-            link="identity",
-            feature_names=feature_names,
-            task="regression"
-        )
-
     agent.mode = "train"
     # --------------------------------------------------------------------------------
     # ----------------------------- init iPDP objects --------------------------------
@@ -355,6 +335,13 @@ def train(config: ConfigFile, agent_name: str):
 
             if PDP_CALCULATE:
                 print("calculating PDP")
+
+                pdp_explainer = PartialDependence(
+                    predictor=model_function,
+                    feature_names=feature_names,
+                    target_names=["Partial Dependence"],
+                )
+
                 pdp_explanations = pdp_explainer.explain(
                     X=new_states,
                     features=None,
@@ -365,7 +352,7 @@ def train(config: ConfigFile, agent_name: str):
                 plt.savefig(os.path.join(PLOT_DIR_IPDP, f"{total_steps}.pdf"))
                 plt.clf()
                 plt.close("all")
-                
+
                 feature_importance_array_pdp = [None] * len(feature_order)
                 for i in feature_order:
                     feature_importance_array_pdp[i] = calculate_feature_importance(
@@ -373,11 +360,21 @@ def train(config: ConfigFile, agent_name: str):
                     )
 
                 save_feature_importance_to_csv_pdp(
-                    feature_order, feature_importance_array_pdp, total_steps, PLOT_DIR_IPDP
+                    feature_order,
+                    feature_importance_array_pdp,
+                    total_steps,
+                    PLOT_DIR_IPDP,
                 )
 
             if ALE_CALCULATE:
                 print("calculating ALE")
+
+                ale_explainer = ALE(
+                    predictor=model_function,
+                    feature_names=feature_names,
+                    target_names=["ALE"],
+                )
+
                 # grid_points_dict = {}
                 # for i in feature_order:
 
@@ -403,7 +400,7 @@ def train(config: ConfigFile, agent_name: str):
 
                 if (min_ale_value < -1) or (max_ale_value > 1):
                     plt.ylim(min_ale_value, max_ale_value)
-                else:                    
+                else:
                     plt.ylim(-1, 1)
 
                 plt.savefig(os.path.join(PLOT_DIR_ALE, f"{total_steps}.pdf"))
@@ -416,12 +413,22 @@ def train(config: ConfigFile, agent_name: str):
                     )
 
                 save_feature_importance_to_csv_ale(
-                    feature_order, feature_importance_array_ale, total_steps, PLOT_DIR_ALE
+                    feature_order,
+                    feature_importance_array_ale,
+                    total_steps,
+                    PLOT_DIR_ALE,
                 )
 
             if SHAP_CALCULATE:
                 print("calculating SHAP")
                 print("SHAP: calculating expected value")
+
+                shap_explainer = KernelShap(
+                    predictor=model_function,
+                    link="identity",
+                    feature_names=feature_names,
+                    task="regression",
+                )
 
                 # size_reference_dataset = int(EXPLAIN_FREQUENCY * 0.01)
                 size_explained_dataset = int(200)
@@ -431,7 +438,7 @@ def train(config: ConfigFile, agent_name: str):
 
                 shap_explainer.fit(
                     background_data=new_states,
-                    summarise_background='auto',
+                    summarise_background="auto",
                 )
 
                 print("SHAP: calculating feature importance")
@@ -477,7 +484,14 @@ def train(config: ConfigFile, agent_name: str):
                 # save_feature_importance_to_csv_tree(feature_order, feature_importance, total_steps, PLOT_DIR_TREE)
 
                 # permutation feature importance
-                feature_importance = permutation_importance(estimator=surrogate_tree, X=new_states, y=new_actions, n_repeats=5, random_state=42, n_jobs=-1)
+                feature_importance = permutation_importance(
+                    estimator=surrogate_tree,
+                    X=new_states,
+                    y=new_actions,
+                    n_repeats=5,
+                    random_state=42,
+                    n_jobs=-1,
+                )
                 sorted_importances_idx = feature_importance.importances_mean.argsort()
 
                 # casting feature_names to ndarry just for the following plotting
@@ -498,19 +512,29 @@ def train(config: ConfigFile, agent_name: str):
                 plt.close("all")
 
                 # plot tree
-                plt.figure(figsize=(20,10))
-                plot_tree(decision_tree=surrogate_tree, feature_names=feature_names, max_depth=3, filled=True, fontsize=12, proportion=True)
+                plt.figure(figsize=(20, 10))
+                plot_tree(
+                    decision_tree=surrogate_tree,
+                    feature_names=feature_names,
+                    max_depth=3,
+                    filled=True,
+                    fontsize=12,
+                    proportion=True,
+                )
                 plt.savefig(os.path.join(PLOT_DIR_TREE, f"{total_steps}_tree.pdf"))
                 plt.clf()
                 plt.close("all")
 
                 mean_feature_imortance = feature_importance.importances_mean
-                save_feature_importance_to_csv_tree(feature_order, mean_feature_imortance, total_steps, PLOT_DIR_TREE)
+                save_feature_importance_to_csv_tree(
+                    feature_order, mean_feature_imortance, total_steps, PLOT_DIR_TREE
+                )
 
                 # coefficient of determination
                 r_squared = surrogate_tree.score(X=new_states, y=new_actions)
-                save_r_squared_to_csv_tree(r_squared, total_steps, save_dir=PLOT_DIR_TREE)
-
+                save_r_squared_to_csv_tree(
+                    r_squared, total_steps, save_dir=PLOT_DIR_TREE
+                )
 
         agent.mode = "train"
         # --------------------------------------------------------------------------------
