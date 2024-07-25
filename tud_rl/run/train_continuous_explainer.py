@@ -54,6 +54,7 @@ from tud_rl.iPDP_helper.multi_threading import (
     explain_one_threading_batch,
     get_new_states_in_buffer,
 )
+from tud_rl.iPDP_helper.timer_to_csv import save_timer_to_csv
 
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
@@ -220,12 +221,12 @@ def train(config: ConfigFile, agent_name: str):
     EXPLAIN_FREQUENCY = 5000
     GRID_SIZE = 5
     THREADING = False
-    ON_HPC = True
+    ON_HPC = False
 
-    PDP_CALCULATE = True
+    PDP_CALCULATE = False
     ALE_CALCULATE = True
-    SHAP_CALCULATE = True
-    SURROGATE_TREE_CALCULATE = True
+    SHAP_CALCULATE = False
+    SURROGATE_TREE_CALCULATE = False
 
     if ON_HPC:
         EXPLAIN_FREQUENCY = 100000
@@ -310,6 +311,15 @@ def train(config: ConfigFile, agent_name: str):
         feature_name = f"feature_{i}"
         feature_names.append(feature_name)
 
+    if PDP_CALCULATE:
+        pdp_timer = 0.0
+    if ALE_CALCULATE:
+        ale_timer = 0.0
+    if SHAP_CALCULATE:
+        SHAP_timer = 0.0
+    if SURROGATE_TREE_CALCULATE:
+        tree_timer = 0.0
+
     agent.mode = "train"
     # --------------------------------------------------------------------------------
     # ----------------------------- init iPDP objects --------------------------------
@@ -327,7 +337,7 @@ def train(config: ConfigFile, agent_name: str):
         # --------------------------------------------------------------------------------
         agent.mode = "test"
 
-        # plot iPDP and feature importance for every EXPLAIN_FREQUENCY
+        # calculate explanations for every EXPLAIN_FREQUENCY
         if total_steps != 0 and total_steps % EXPLAIN_FREQUENCY == 0:
             new_states = get_new_states_in_buffer(
                 agent.replay_buffer.s, agent.replay_buffer.ptr, EXPLAIN_FREQUENCY
@@ -335,6 +345,7 @@ def train(config: ConfigFile, agent_name: str):
 
             if PDP_CALCULATE:
                 print("calculating PDP")
+                pdp_start_time = time.time()
 
                 pdp_explainer = PartialDependence(
                     predictor=model_function,
@@ -358,7 +369,6 @@ def train(config: ConfigFile, agent_name: str):
                     feature_importance_array_pdp[i] = calculate_feature_importance(
                         y_values=pdp_explanations.pd_values[i][0, :],
                     )
-
                 save_feature_importance_to_csv_pdp(
                     feature_order,
                     feature_importance_array_pdp,
@@ -366,33 +376,28 @@ def train(config: ConfigFile, agent_name: str):
                     PLOT_DIR_IPDP,
                 )
 
+                pdp_end_time = time.time()
+                pdp_time_elapsed = pdp_end_time - pdp_start_time
+                pdp_timer += pdp_time_elapsed
+                save_timer_to_csv(pdp_timer, total_steps, PLOT_DIR_IPDP)
+
             if ALE_CALCULATE:
                 print("calculating ALE")
+                ale_start_time = time.time()
 
                 ale_explainer = ALE(
                     predictor=model_function,
                     feature_names=feature_names,
                     target_names=["ALE"],
                 )
-
-                # grid_points_dict = {}
-                # for i in feature_order:
-
-                #     min_feature_value = np.min(new_states[:, i])
-                #     max_feature_value = np.max(new_states[:, i])
-                #     grid_points = np.linspace(
-                #         start=min_feature_value, stop=max_feature_value, num=10
-                #     )
-                #     grid_points_dict[i] = grid_points
-
-                # ale_explanations = ale_explainer.explain(X=new_states, grid_points=grid_points_dict)
                 ale_explanations = ale_explainer.explain(X=new_states)
-
-                plot_ale(ale_explanations, n_cols=3)
-                # TODO remove legend
-                # maybe with creating a plt.figure() before calling plot_ale()?
-                # plt.legend("", frameon=False)
-                # plt.gca().get_legend().remove()
+                
+                # remove legend from ALE plots
+                axes = plot_ale(ale_explanations, n_cols=3)
+                for ax in axes.ravel():
+                    legend = ax.get_legend()
+                    if legend:
+                        legend.remove()
 
                 # if ALE values are in range [-1, 1]
                 min_ale_value = np.min(np.concatenate(ale_explanations.ale_values))
@@ -419,9 +424,14 @@ def train(config: ConfigFile, agent_name: str):
                     PLOT_DIR_ALE,
                 )
 
+                ale_end_time = time.time()
+                ale_time_elapsed = ale_end_time - ale_start_time
+                ale_timer += ale_time_elapsed
+                save_timer_to_csv(ale_timer, total_steps, PLOT_DIR_ALE)
+
             if SHAP_CALCULATE:
                 print("calculating SHAP")
-                print("SHAP: calculating expected value")
+                SHAP_start_time = time.time()
 
                 shap_explainer = KernelShap(
                     predictor=model_function,
@@ -442,7 +452,6 @@ def train(config: ConfigFile, agent_name: str):
                     n_background_samples = 200
                 )
 
-                print("SHAP: calculating feature importance")
                 shap_explanations = shap_explainer.explain(
                     X=new_states[random_sample_id]
                 )
@@ -468,8 +477,15 @@ def train(config: ConfigFile, agent_name: str):
                     feature_order, sorted_feature_importance, total_steps, PLOT_DIR_SHAP
                 )
 
+                SHAP_end_time = time.time()
+                SHAP_time_elapsed = SHAP_end_time - SHAP_start_time
+                SHAP_timer += SHAP_time_elapsed
+                save_timer_to_csv(SHAP_timer, total_steps, PLOT_DIR_SHAP)
+
             if SURROGATE_TREE_CALCULATE:
                 print("calculating tree")
+                tree_start_time = time.time()
+
                 # get current actions on new_states
                 new_actions = np.zeros(shape=np.shape(new_states)[0])
                 for i in range(np.shape(new_states)[0]):
@@ -536,6 +552,11 @@ def train(config: ConfigFile, agent_name: str):
                 save_r_squared_to_csv_tree(
                     r_squared, total_steps, save_dir=PLOT_DIR_TREE
                 )
+
+                tree_end_time = time.time()
+                tree_time_elapsed = tree_end_time - tree_start_time
+                tree_timer += tree_time_elapsed
+                save_timer_to_csv(tree_timer, total_steps, PLOT_DIR_TREE)
 
         agent.mode = "train"
         # --------------------------------------------------------------------------------

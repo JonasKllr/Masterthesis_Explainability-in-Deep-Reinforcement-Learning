@@ -29,8 +29,8 @@ DQN_WEIGHTS = None  # path to file for weight initialization (discrete actions)
 ACTOR_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
 CRITIC_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
 
-COMPUTE_iPDP = True
-COMPUTE_BATCH_EXPLAINERS = False
+COMPUTE_iPDP = False
+COMPUTE_BATCH_EXPLAINERS = True
 # ------------------------------------------------------------
 # ------------------------------------------------------------
 
