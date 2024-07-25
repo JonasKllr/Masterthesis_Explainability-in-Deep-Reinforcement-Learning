@@ -8,7 +8,7 @@ without the argument parser.
 import tud_rl.envs
 import tud_rl.run.train_continuous as cont
 import tud_rl.run.train_continuous_iPDP as cont_iPDP
-import tud_rl.run.train_continuous_PDP as cont_PDP
+# import tud_rl.run.train_continuous_PDP as cont_PDP
 import tud_rl.run.train_continuous_explainer as cont_explainer
 import tud_rl.run.train_discrete as discr
 import tud_rl.run.visualize_continuous as vizcont
