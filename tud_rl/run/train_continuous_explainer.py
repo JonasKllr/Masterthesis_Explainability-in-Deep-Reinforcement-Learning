@@ -224,8 +224,8 @@ def train(config: ConfigFile, agent_name: str):
     ON_HPC = False
 
     PDP_CALCULATE = False
-    ALE_CALCULATE = True
-    SHAP_CALCULATE = False
+    ALE_CALCULATE = False
+    SHAP_CALCULATE = True
     SURROGATE_TREE_CALCULATE = False
 
     if ON_HPC:
@@ -391,7 +391,7 @@ def train(config: ConfigFile, agent_name: str):
                     target_names=["ALE"],
                 )
                 ale_explanations = ale_explainer.explain(X=new_states)
-                
+
                 # remove legend from ALE plots
                 axes = plot_ale(ale_explanations, n_cols=3)
                 for ax in axes.ravel():
@@ -402,7 +402,6 @@ def train(config: ConfigFile, agent_name: str):
                 # if ALE values are in range [-1, 1]
                 min_ale_value = np.min(np.concatenate(ale_explanations.ale_values))
                 max_ale_value = np.max(np.concatenate(ale_explanations.ale_values))
-
                 if (min_ale_value < -1) or (max_ale_value > 1):
                     plt.ylim(min_ale_value, max_ale_value)
                 else:
@@ -449,21 +448,19 @@ def train(config: ConfigFile, agent_name: str):
                 shap_explainer.fit(
                     background_data=new_states,
                     summarise_background=True,
-                    n_background_samples = 200
+                    n_background_samples=200,
                 )
 
                 shap_explanations = shap_explainer.explain(
                     X=new_states[random_sample_id]
                 )
-                # shap.summary_plot(shap_explanations.shap_values, new_states[random_sample_id], feature_names)
+                
                 shap.summary_plot(
-                    shap_values=shap_explanations.shap_values,
+                    shap_values=shap_explanations.shap_values[0],
                     feature_names=feature_names,
                     show=False,
+                    plot_type="bar"
                 )
-                # plt.legend()
-                # leg = plt.gca().get_legend()
-                # leg.legendHandles[0].set_visible(False)
 
                 plt.savefig(os.path.join(PLOT_DIR_SHAP, f"{total_steps}.pdf"))
                 plt.clf()
