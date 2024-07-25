@@ -220,11 +220,11 @@ def train(config: ConfigFile, agent_name: str):
     EXPLAIN_FREQUENCY = 5000
     GRID_SIZE = 5
     THREADING = False
-    ON_HPC = False
+    ON_HPC = True
 
-    PDP_CALCULATE = False
-    ALE_CALCULATE = False
-    SHAP_CALCULATE = False
+    PDP_CALCULATE = True
+    ALE_CALCULATE = True
+    SHAP_CALCULATE = True
     SURROGATE_TREE_CALCULATE = True
 
     if ON_HPC:
