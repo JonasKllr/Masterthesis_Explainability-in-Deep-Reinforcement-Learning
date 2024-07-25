@@ -29,7 +29,7 @@ from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
 from tud_rl.wrappers.action_selection_wrapper import (
     ActionSelectionWrapper,
-    ActionSelectionWrapperALE,
+    ActionSelectionWrapperAlibi,
 )
 
 from tud_rl.iPDP_helper.validate_action_selection_wrapper import (
@@ -45,8 +45,8 @@ from tud_rl.iPDP_helper.feature_importance import (
 from tud_rl.iPDP_helper.multi_threading import (
     cast_state_buffer_to_array_of_dicts,
     explain_one_threading_batch,
-    get_new_states_in_buffer,
 )
+from tud_rl.iPDP_helper.get_new_states import get_new_states_in_buffer
 
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
@@ -286,7 +286,7 @@ def train(config: ConfigFile, agent_name: str):
             feature_name = f"feature_{i}"
             feature_names.append(feature_name)
 
-        ale_function = ActionSelectionWrapperALE(
+        ale_function = ActionSelectionWrapperAlibi(
             action_selection_function=agent.select_action
         )
         ale_explainer_array = []
