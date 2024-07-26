@@ -204,8 +204,8 @@ def train(config: ConfigFile, agent_name: str):
 
     PDP_CALCULATE = False
     ALE_CALCULATE = False
-    SHAP_CALCULATE = True
-    SURROGATE_TREE_CALCULATE = False
+    SHAP_CALCULATE = False
+    SURROGATE_TREE_CALCULATE = True
 
     EXPLAIN_FREQUENCY = 5000
     if ON_HPC:
@@ -453,7 +453,8 @@ def train(config: ConfigFile, agent_name: str):
                 for i in range(np.shape(new_states)[0]):
                     new_actions[i] = agent.select_action(new_states[i, :])
 
-                surrogate_tree = DecisionTreeRegressor(max_depth=10)
+                # surrogate_tree = DecisionTreeRegressor(max_depth=10)
+                surrogate_tree = DecisionTreeRegressor(max_depth=None)
                 surrogate_tree.fit(X=new_states, y=new_actions)
 
                 # permutation feature importance
