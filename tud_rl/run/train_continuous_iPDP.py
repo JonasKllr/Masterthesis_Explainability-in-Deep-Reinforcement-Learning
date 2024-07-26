@@ -204,7 +204,7 @@ def train(config: ConfigFile, agent_name: str):
 
     if ON_HPC:
         PLOT_DIR_IPDP = os.path.join(
-            "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now
+            "./", now
         )
     else:
         PLOT_DIR_IPDP = os.path.join(

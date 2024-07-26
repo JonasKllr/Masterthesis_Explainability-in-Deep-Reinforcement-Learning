@@ -215,18 +215,10 @@ def train(config: ConfigFile, agent_name: str):
     now = now.strftime("%Y-%m-%d_%H-%M")
 
     if ON_HPC:
-        PLOT_DIR_PDP = os.path.join(
-            "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now, "pdp/"
-        )
-        PLOT_DIR_ALE = os.path.join(
-            "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now, "ale/"
-        )
-        PLOT_DIR_SHAP = os.path.join(
-            "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now, "SHAP/"
-        )
-        PLOT_DIR_TREE = os.path.join(
-            "/home/joke793c/thesis/horse/joke793c-thesis_ws/plots/", now, "tree/"
-        )
+        PLOT_DIR_PDP = os.path.join("./", now, "pdp/")
+        PLOT_DIR_ALE = os.path.join("./", now, "ale/")
+        PLOT_DIR_SHAP = os.path.join("./", now, "SHAP/")
+        PLOT_DIR_TREE = os.path.join("./", now, "tree/")
 
         if PDP_CALCULATE:
             if not os.path.exists(PLOT_DIR_PDP):
