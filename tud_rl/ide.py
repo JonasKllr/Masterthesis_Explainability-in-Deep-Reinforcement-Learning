@@ -30,7 +30,7 @@ ACTOR_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2
 CRITIC_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
 
 COMPUTE_iPDP = False
-COMPUTE_BATCH_EXPLAINERS = False
+COMPUTE_BATCH_EXPLAINERS = True
 # ------------------------------------------------------------
 # ------------------------------------------------------------
 
