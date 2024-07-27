@@ -23,7 +23,7 @@ from tud_rl.configs.discrete_actions import __path__ as discr_path
 
 TASK = "train"  # ["train", "viz"]
 CONFIG_FILE = "ski_mdp.yaml"  # configuration file as `.yaml` or `.json`
-SEED = 42  # set a seed different to the one specified in your config
+SEED = 30  # [1.) 42, 2.) 30, 3.) 20] set a seed different to the one specified in your config
 AGENT_NAME = "DDPG"  # agent to train/viz
 DQN_WEIGHTS = None  # path to file for weight initialization (discrete actions)
 ACTOR_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
