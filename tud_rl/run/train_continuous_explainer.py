@@ -211,6 +211,9 @@ def train(config: ConfigFile, agent_name: str):
     if ON_HPC:
         EXPLAIN_FREQUENCY = 100000
 
+    feature_order = np.arange(start=0, stop=np.shape(state)[0])
+    feature_order = feature_order.tolist()
+
     now = datetime.datetime.now()
     now = now.strftime("%Y-%m-%d_%H-%M")
 
@@ -227,8 +230,10 @@ def train(config: ConfigFile, agent_name: str):
             if not os.path.exists(PLOT_DIR_ALE):
                 os.makedirs(PLOT_DIR_ALE)
         if SHAP_CALCULATE:
-            if not os.path.exists(PLOT_DIR_SHAP):
-                os.makedirs(PLOT_DIR_SHAP)
+            for i in feature_order:
+                if not os.path.exists(os.path.join(PLOT_DIR_SHAP, f"feature_{i}")):
+                    os.makedirs(os.path.join(PLOT_DIR_SHAP, f"feature_{i}"))
+
         if SURROGATE_TREE_CALCULATE:
             if not os.path.exists(PLOT_DIR_TREE):
                 os.makedirs(PLOT_DIR_TREE)
@@ -262,14 +267,12 @@ def train(config: ConfigFile, agent_name: str):
             if not os.path.exists(PLOT_DIR_ALE):
                 os.makedirs(PLOT_DIR_ALE)
         if SHAP_CALCULATE:
-            if not os.path.exists(PLOT_DIR_SHAP):
-                os.makedirs(PLOT_DIR_SHAP)
+            for i in feature_order:
+                if not os.path.exists(os.path.join(PLOT_DIR_SHAP, f"feature_{i}")):
+                    os.makedirs(os.path.join(PLOT_DIR_SHAP, f"feature_{i}"))
         if SURROGATE_TREE_CALCULATE:
             if not os.path.exists(PLOT_DIR_TREE):
                 os.makedirs(PLOT_DIR_TREE)
-
-    feature_order = np.arange(start=0, stop=np.shape(state)[0])
-    feature_order = feature_order.tolist()
 
     agent.mode = "test"
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
@@ -429,6 +432,23 @@ def train(config: ConfigFile, agent_name: str):
                 )
                 plt.savefig(os.path.join(PLOT_DIR_SHAP, f"{total_steps}.pdf"))
                 plt.clf()
+                plt.close("all")
+
+                for i in feature_order:
+                    shap.dependence_plot(
+                        ind=i,
+                        shap_values=shap_explanations.shap_values[0],
+                        features=new_states[random_sample_id],
+                        feature_names=feature_names,
+                        interaction_index=None,
+                        show=False,
+                    )
+                    plt.savefig(
+                        os.path.join(
+                            PLOT_DIR_SHAP, f"feature_{i}", f"{total_steps}.pdf"
+                        )
+                    )
+                    plt.clf()
                 plt.close("all")
 
                 ranked_feature_importance = shap_explanations.raw["importances"]["0"]
