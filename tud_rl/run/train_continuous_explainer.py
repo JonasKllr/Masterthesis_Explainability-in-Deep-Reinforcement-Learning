@@ -446,7 +446,8 @@ def train(config: ConfigFile, agent_name: str):
                     plt.savefig(
                         os.path.join(
                             PLOT_DIR_SHAP, f"feature_{i}", f"{total_steps}.pdf"
-                        )
+                        ),
+                        bbox_inches="tight",
                     )
                     plt.clf()
                 plt.close("all")
