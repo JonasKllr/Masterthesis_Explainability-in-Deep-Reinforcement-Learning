@@ -37,6 +37,7 @@ from tud_rl.iPDP_helper.feature_importance import (
 )
 from tud_rl.iPDP_helper.get_new_states import get_new_states_in_buffer
 from tud_rl.iPDP_helper.timer_to_csv import save_timer_to_csv
+from tud_rl.iPDP_helper.save_buffer import save_buffer_to_file
 
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
@@ -200,12 +201,13 @@ def train(config: ConfigFile, agent_name: str):
     # ----------------------------- init explanations --------------------------------
     # --------------------------------------------------------------------------------
 
-    ON_HPC = True
+    ON_HPC = False
 
     PDP_CALCULATE = True
     ALE_CALCULATE = True
     SHAP_CALCULATE = True
-    SURROGATE_TREE_CALCULATE = True
+    SURROGATE_TREE_CALCULATE = False
+    SAVE_BUFFER = True
 
     EXPLAIN_FREQUENCY = 5000
     if ON_HPC:
@@ -222,6 +224,7 @@ def train(config: ConfigFile, agent_name: str):
         PLOT_DIR_ALE = os.path.join("./", now, "ale/")
         PLOT_DIR_SHAP = os.path.join("./", now, "SHAP/")
         PLOT_DIR_TREE = os.path.join("./", now, "tree/")
+        PLOT_DIR_BUFFER = os.path.join("./", now, "buffer/")
 
         if PDP_CALCULATE:
             if not os.path.exists(PLOT_DIR_PDP):
@@ -233,10 +236,12 @@ def train(config: ConfigFile, agent_name: str):
             for i in feature_order:
                 if not os.path.exists(os.path.join(PLOT_DIR_SHAP, f"feature_{i}")):
                     os.makedirs(os.path.join(PLOT_DIR_SHAP, f"feature_{i}"))
-
         if SURROGATE_TREE_CALCULATE:
             if not os.path.exists(PLOT_DIR_TREE):
                 os.makedirs(PLOT_DIR_TREE)
+        if SAVE_BUFFER:
+            if not os.path.exists(PLOT_DIR_BUFFER):
+                os.makedirs(PLOT_DIR_BUFFER)
 
     else:
         PLOT_DIR_PDP = os.path.join(
@@ -259,6 +264,11 @@ def train(config: ConfigFile, agent_name: str):
             now,
             "tree/",
         )
+        PLOT_DIR_BUFFER = os.path.join(
+            "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
+            now,
+            "buffer/",
+        )
 
         if PDP_CALCULATE:
             if not os.path.exists(PLOT_DIR_PDP):
@@ -273,6 +283,9 @@ def train(config: ConfigFile, agent_name: str):
         if SURROGATE_TREE_CALCULATE:
             if not os.path.exists(PLOT_DIR_TREE):
                 os.makedirs(PLOT_DIR_TREE)
+        if SAVE_BUFFER:
+            if not os.path.exists(PLOT_DIR_BUFFER):
+                os.makedirs(PLOT_DIR_BUFFER)
 
     agent.mode = "test"
     # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
@@ -365,7 +378,9 @@ def train(config: ConfigFile, agent_name: str):
                     feature_names=feature_names,
                     target_names=["ALE"],
                 )
-                ale_explanations = ale_explainer.explain(X=new_states)
+                ale_explanations = ale_explainer.explain(
+                    X=new_states, min_bin_points=10
+                )
 
                 # remove legend from ALE plots
                 axes = plot_ale(ale_explanations, n_cols=3)
@@ -535,6 +550,16 @@ def train(config: ConfigFile, agent_name: str):
                 tree_time_elapsed = tree_end_time - tree_start_time
                 tree_timer += tree_time_elapsed
                 save_timer_to_csv(tree_timer, total_steps, PLOT_DIR_TREE)
+
+            if SAVE_BUFFER:
+                print("saving buffer to file")
+                # get current actions on new_states
+                new_actions = np.zeros(shape=np.shape(new_states)[0])
+                for i in range(np.shape(new_states)[0]):
+                    new_actions[i] = agent.select_action(new_states[i, :])
+
+                save_buffer_to_file(new_states, PLOT_DIR_BUFFER, kind="states")
+                save_buffer_to_file(new_actions, PLOT_DIR_BUFFER, kind="actions")
 
             agent.mode = "train"
         # --------------------------------------------------------------------------------
