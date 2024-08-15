@@ -201,7 +201,7 @@ def train(config: ConfigFile, agent_name: str):
     # ----------------------------- init explanations --------------------------------
     # --------------------------------------------------------------------------------
 
-    ON_HPC = False
+    ON_HPC = True
 
     PDP_CALCULATE = True
     ALE_CALCULATE = True
