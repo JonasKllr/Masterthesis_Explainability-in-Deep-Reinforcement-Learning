@@ -13,7 +13,7 @@ def define_box_properties(plot_name, color_code, label):
     plt.legend()
 
 
-DIR_CSV = "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/final/explanations_4mil_final/plots/runtimes"
+DIR_CSV = "path/to/folder"
 
 ALE_CSV = os.path.join(DIR_CSV, "ale.csv")
 PDP_CSV = os.path.join(DIR_CSV, "pdp.csv")

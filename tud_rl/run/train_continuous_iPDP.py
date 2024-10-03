@@ -205,7 +205,7 @@ def train(config: ConfigFile, agent_name: str):
         PLOT_DIR_IPDP = os.path.join("./", now)
     else:
         PLOT_DIR_IPDP = os.path.join(
-            "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/iPDP/",
+            "/path/to/folder",
             now,
         )
 

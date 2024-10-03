@@ -10,7 +10,7 @@ def get_last_folder_name(path):
 
 
 IPDP = False
-DIR_PLOTS_IPDP = "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/final/iPDP/ipdp_1/2024-07-25_22-06/"
+DIR_PLOTS_IPDP = "path/to/folder"
 
 
 if IPDP == True:

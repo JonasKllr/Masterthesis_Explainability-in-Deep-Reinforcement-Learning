@@ -237,22 +237,22 @@ def train(config: ConfigFile, agent_name: str):
 
     else:
         PLOT_DIR_PDP = os.path.join(
-            "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
+            "/path/to/folder",
             now,
             "pdp/",
         )
         PLOT_DIR_ALE = os.path.join(
-            "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
+            "/path/to/folder",
             now,
             "ale/",
         )
         PLOT_DIR_SHAP = os.path.join(
-            "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
+            "/path/to/folder",
             now,
             "SHAP/",
         )
         PLOT_DIR_BUFFER = os.path.join(
-            "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
+            "/path/to/folder",
             now,
             "buffer/",
         )
