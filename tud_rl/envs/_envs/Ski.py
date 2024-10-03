@@ -196,6 +196,7 @@ class Ski(gym.Env):
             self.ax0.set_ylim(-self.max_goal_end_y*1.1, self.max_goal_end_y*1.1)
             self.ax0.set_xlabel("x")
             self.ax0.set_ylabel("y")
+            self.ax0.set_title("Agent")
             if agent_name is not None:
                 self.ax0.set_title(agent_name)
 
@@ -204,7 +205,7 @@ class Ski(gym.Env):
             self.ax0.scatter(self.obst_x, self.obst_y + self.goalwidth/2, color = "green")
             self.ax0.scatter(self.obst_x, self.obst_y - self.goalwidth/2, color = "green")
             self.ax0.scatter(self.obst_x, self.obst_y_future + self.goalwidth/2, color = "yellow")
-            self.ax0.scatter(self.obst_x, self.obst_y_future - self.goalwidth/2, color = "yellow")            
+            self.ax0.scatter(self.obst_x, self.obst_y_future - self.goalwidth/2, color = "yellow")   
             
             # ---- STATE PLOT ----
             # clear prior axes, set limits

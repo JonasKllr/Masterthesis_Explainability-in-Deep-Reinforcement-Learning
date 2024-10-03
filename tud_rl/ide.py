@@ -1,14 +1,17 @@
-
 """
 Main script for running the tud_rl package 
 from inside an editor/IDE.
 Basically the same as __main__.py but 
 without the argument parser. 
 """
+
 import tud_rl.envs
 import tud_rl.run.train_continuous as cont
+import tud_rl.run.train_continuous_iPDP as cont_iPDP
+import tud_rl.run.train_continuous_explainer as cont_explainer
 import tud_rl.run.train_discrete as discr
 import tud_rl.run.visualize_continuous as vizcont
+import tud_rl.run.visualize_continuous_explainer as vizcont_expl
 import tud_rl.run.visualize_discrete as vizdiscr
 from tud_rl.agents import is_discrete, validate_agent
 from tud_rl.common.configparser import ConfigFile
@@ -18,14 +21,18 @@ from tud_rl.configs.discrete_actions import __path__ as discr_path
 # ---------------- User Settings -----------------------------
 # ------------------------------------------------------------
 
-TASK        = "viz"           # ["train", "viz"]
-CONFIG_FILE = "complex_oa_mdp.yaml"     # configuration file as `.yaml` or `.json`
-SEED        = 42                # set a seed different to the one specified in your config
-AGENT_NAME  = "DDPG"             # agent to train/viz
-DQN_WEIGHTS = None              # path to file for weight initialization (discrete actions)
-ACTOR_WEIGHTS = '/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_ComplexOA-v0_MDP_2024-05-17_12_archive/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
-CRITIC_WEIGHTS = '/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/DDPG_ComplexOA-v0_MDP_2024-05-17_12_archive/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
+TASK = "train"  # ["train", "viz"]
+CONFIG_FILE = "ski_mdp.yaml"  # configuration file as `.yaml` or `.json`
+SEED = 42  # set a seed different to the one specified in your config
+AGENT_NAME = "DDPG"  # agent to train/viz
+DQN_WEIGHTS = None  # path to file for weight initialization (discrete actions)
+ACTOR_WEIGHTS = None  # path to file for weight initialization (continuous actions)
+CRITIC_WEIGHTS = None  # path to file for weight initialization (continuous actions)
 
+# choice of explainers
+COMPUTE_IPDP = False
+COMPUTE_BATCH_EXPLAINERS = True
+VIZ_SURROGATE_TREE_OUTPUTS = False
 # ------------------------------------------------------------
 # ------------------------------------------------------------
 
@@ -61,12 +68,26 @@ if ACTOR_WEIGHTS is not None:
 config.max_episode_handler()
 
 if TASK == "train":
-    if discrete:
-        discr.train(config, AGENT_NAME)
+    if COMPUTE_BATCH_EXPLAINERS == True:
+        cont_explainer.train(
+            config=config,
+            agent_name=AGENT_NAME,
+        )
+    elif COMPUTE_IPDP == True:
+        cont_iPDP.train(config=config, agent_name=AGENT_NAME)
     else:
-        cont.train(config, AGENT_NAME)
+        if discrete:
+            discr.train(config, AGENT_NAME)
+        else:
+            cont.train(config, AGENT_NAME)
 elif TASK == "viz":
-    if discrete:
-        vizdiscr.test(config, AGENT_NAME)
+    if VIZ_SURROGATE_TREE_OUTPUTS:
+        if discrete:
+            vizdiscr.test(config, AGENT_NAME)
+        else:
+            vizcont_expl.test(config, AGENT_NAME)
     else:
-        vizcont.test(config, AGENT_NAME)
+        if discrete:
+            vizdiscr.test(config, AGENT_NAME)
+        else:
+            vizcont.test(config, AGENT_NAME)
