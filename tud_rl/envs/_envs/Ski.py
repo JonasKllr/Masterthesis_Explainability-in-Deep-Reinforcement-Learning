@@ -179,13 +179,13 @@ class Ski(gym.Env):
                 self.fig = plt.figure(figsize=(17, 10))
                 self.gs  = self.fig.add_gridspec(2, 2)
                 self.ax0 = self.fig.add_subplot(self.gs[0, 0]) # ship
-                # self.ax1 = self.fig.add_subplot(self.gs[1, 0]) # state
-                # self.ax2 = self.fig.add_subplot(self.gs[1, 1]) # reward
-                # self.ax3 = self.fig.add_subplot(self.gs[0, 1]) # action
-                # self.ax2.old_time = 0
-                # self.ax2.old_reward = 0
-                # self.ax3.old_time = 0
-                # self.ax3.old_action = 0
+                self.ax1 = self.fig.add_subplot(self.gs[1, 0]) # state
+                self.ax2 = self.fig.add_subplot(self.gs[1, 1]) # reward
+                self.ax3 = self.fig.add_subplot(self.gs[0, 1]) # action
+                self.ax2.old_time = 0
+                self.ax2.old_reward = 0
+                self.ax3.old_time = 0
+                self.ax3.old_action = 0
                 plt.ion()
                 plt.show()
             
@@ -197,8 +197,8 @@ class Ski(gym.Env):
             self.ax0.set_xlabel("x")
             self.ax0.set_ylabel("y")
             self.ax0.set_title("Agent")
-            # if agent_name is not None:
-            #     self.ax0.set_title(agent_name)
+            if agent_name is not None:
+                self.ax0.set_title(agent_name)
 
             # set agent and vessels
             self.ax0.scatter(self.agent_x, self.agent_y, color = "red")
@@ -209,41 +209,41 @@ class Ski(gym.Env):
             
             # ---- STATE PLOT ----
             # clear prior axes, set limits
-            # self.ax1.clear()
-            # self.ax1.set_xlim(-200, 1000)
-            # self.ax0.set_ylim(-self.max_goal_end_y*1.1, self.max_goal_end_y*1.1)
+            self.ax1.clear()
+            self.ax1.set_xlim(-200, 1000)
+            self.ax0.set_ylim(-self.max_goal_end_y*1.1, self.max_goal_end_y*1.1)
             
             # add agent and states
-            # self.ax1.scatter(0, self.agent_y, color = "red")
-            # self.ax1.set_xlabel("TTC-x")
-            # self.ax1.set_ylabel("y")
+            self.ax1.scatter(0, self.agent_y, color = "red")
+            self.ax1.set_xlabel("TTC-x")
+            self.ax1.set_ylabel("y")
  
 
             # ---- REWARD PLOT ----
-            # if self.current_timestep == 0:
-            #     self.ax2.clear()
-            #     self.ax2.old_time = 0
-            #     self.ax2.old_reward = 0
-            # self.ax2.set_xlim(1, self.max_temporal_dist + 20)
-            # self.ax2.set_ylim(0, 100)
-            # self.ax2.set_xlabel("Timestep in episode")
-            # self.ax2.set_ylabel("Reward")
-            # self.ax2.plot([self.ax2.old_time, self.current_timestep], [self.ax2.old_reward, self.reward], color = "black")
-            # self.ax2.old_time = self.current_timestep
-            # self.ax2.old_reward = self.reward
+            if self.current_timestep == 0:
+                self.ax2.clear()
+                self.ax2.old_time = 0
+                self.ax2.old_reward = 0
+            self.ax2.set_xlim(1, self.max_temporal_dist + 20)
+            self.ax2.set_ylim(0, 100)
+            self.ax2.set_xlabel("Timestep in episode")
+            self.ax2.set_ylabel("Reward")
+            self.ax2.plot([self.ax2.old_time, self.current_timestep], [self.ax2.old_reward, self.reward], color = "black")
+            self.ax2.old_time = self.current_timestep
+            self.ax2.old_reward = self.reward
 
             # ---- ACTION PLOT ----
-            # if self.current_timestep == 0:
-            #     self.ax3.clear()
-            #     self.ax3.old_time = 0
-            #     self.ax3.old_action = 0
-            # self.ax2.set_xlim(1, self.max_temporal_dist + 20)
-            # self.ax3.set_ylim(-self.ay_max, self.ay_max)
-            # self.ax3.set_xlabel("Timestep in episode")
-            # self.ax3.set_ylabel("Agent a_y")
-            # self.ax3.plot([self.ax3.old_time, self.current_timestep], [self.ax3.old_action, self.agent_ay], color = "black")
-            # self.ax3.old_time = self.current_timestep
-            # self.ax3.old_action = self.agent_ay
+            if self.current_timestep == 0:
+                self.ax3.clear()
+                self.ax3.old_time = 0
+                self.ax3.old_action = 0
+            self.ax2.set_xlim(1, self.max_temporal_dist + 20)
+            self.ax3.set_ylim(-self.ay_max, self.ay_max)
+            self.ax3.set_xlabel("Timestep in episode")
+            self.ax3.set_ylabel("Agent a_y")
+            self.ax3.plot([self.ax3.old_time, self.current_timestep], [self.ax3.old_action, self.agent_ay], color = "black")
+            self.ax3.old_time = self.current_timestep
+            self.ax3.old_action = self.agent_ay
             
             # delay plotting for ease of user
             plt.pause(self.plot_delay)
