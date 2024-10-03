@@ -29,12 +29,19 @@ if IPDP == True:
     span = 3  # 1 for no smoothing
     data = data.ewm(span=span, adjust=False).mean()
 
-    colors = ["#06C", "#8BC1F7", "#8A8D90", "#8A8D90","#4CB140", "#4CB140"]
-    styles = ["-", "-", "-", "--","--", "-"]
+    colors = ["#06C", "#8BC1F7", "#8A8D90", "#8A8D90", "#4CB140", "#4CB140"]
+    styles = ["-", "-", "-", "--", "--", "-"]
 
     plt.figure(figsize=(12, 8))
     for i, column in enumerate(data.columns[1:]):
-        plt.plot(data["time_step"], data[column], label=column, linewidth=3.0, color=colors[i], linestyle=styles[i])
+        plt.plot(
+            data["time_step"],
+            data[column],
+            label=column,
+            linewidth=3.0,
+            color=colors[i],
+            linestyle=styles[i],
+        )
 
     plt.xlabel("Time Step [-]")
     plt.ylabel("Feature Importance [-]")
@@ -49,7 +56,11 @@ if IPDP == True:
 
     handles, labels = plt.gca().get_legend_handles_labels()
     order = [0, 1, 5, 4, 2, 3]
-    plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc="upper left")
+    plt.legend(
+        [handles[idx] for idx in order],
+        [labels[idx] for idx in order],
+        loc="upper left",
+    )
     plt.ylim(-0.04, 1.04)
     plt.yticks(np.linspace(0, 1, 5))
 
@@ -73,7 +84,9 @@ else:
             else:
                 try:
                     name_csv = f"feature_importance_{last_folder_name}.csv"
-                    data = pd.read_csv(os.path.join(DIR_PLOTS, last_folder_name, name_csv))
+                    data = pd.read_csv(
+                        os.path.join(DIR_PLOTS, last_folder_name, name_csv)
+                    )
                     pass
                 except:
                     continue
@@ -89,12 +102,19 @@ else:
             span = 3  # 1 for no smoothing
             data = data.ewm(span=span, adjust=False).mean()
 
-            colors = ["#06C", "#8BC1F7", "#8A8D90", "#8A8D90","#4CB140", "#4CB140"]
-            styles = ["-", "-", "-", "--","--", "-"]
+            colors = ["#06C", "#8BC1F7", "#8A8D90", "#8A8D90", "#4CB140", "#4CB140"]
+            styles = ["-", "-", "-", "--", "--", "-"]
 
             plt.figure(figsize=(12, 8))
             for i, column in enumerate(data.columns[1:]):
-                plt.plot(data["time_step"], data[column], label=column, linewidth=3.0, color=colors[i], linestyle=styles[i])
+                plt.plot(
+                    data["time_step"],
+                    data[column],
+                    label=column,
+                    linewidth=3.0,
+                    color=colors[i],
+                    linestyle=styles[i],
+                )
 
             plt.xlabel("Time Step [-]")
             plt.ylabel("Feature Importance [-]")
@@ -121,30 +141,26 @@ else:
                         + "\n"
                         + rf"exponentially smoothed with $\alpha = \dfrac{{2}}{{{span}+1}}$"
                     )
-                # elif last_folder_name == "tree":
-                #     plt.title(
-                #         r"$\bf{DecisionTree-based\ Feature\ Importance}$"
-                #         + "\n"
-                #         + rf"exponentially smoothed with $\alpha = \dfrac{{2}}{{{span}+1}}$"
-                #     )
 
             handles, labels = plt.gca().get_legend_handles_labels()
             order = [0, 1, 5, 4, 2, 3]
-            plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc="upper left")
+            plt.legend(
+                [handles[idx] for idx in order],
+                [labels[idx] for idx in order],
+                loc="upper left",
+            )
             plt.ylim(-0.04, 1.04)
             plt.yticks(np.linspace(0, 1, 5))
 
             plt.tight_layout()
             if fnmatch.fnmatch(last_folder_name, "feature_*"):
-                plt.savefig(
-                    os.path.join(
-                        DIR_PLOTS, "SHAP", "FI_SHAP_nomalized.pdf"
-                    )
-                )
+                plt.savefig(os.path.join(DIR_PLOTS, "SHAP", "FI_SHAP_nomalized.pdf"))
             else:
                 plt.savefig(
                     os.path.join(
-                        DIR_PLOTS, last_folder_name, f"FI_{last_folder_name}_nomalized.pdf"
+                        DIR_PLOTS,
+                        last_folder_name,
+                        f"FI_{last_folder_name}_nomalized.pdf",
                     )
                 )
 

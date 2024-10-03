@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def get_new_states_in_buffer(
     state_buffer: np.ndarray, state_ptr: int, plot_frequency_iPDP: int
 ):
