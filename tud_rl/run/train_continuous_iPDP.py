@@ -4,22 +4,12 @@ import pickle
 import random
 import shutil
 import time
-
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
-
 import torch
-
-from ixai.explainer.pdp import IncrementalPDP
-from ixai.storage.ordered_reservoir_storage import OrderedReservoirStorage
-
-from tud_rl.iPDP_helper.feature_importance import (
-    calculate_feature_importance_iPDP,
-    save_feature_importance_to_csv,
-)
 
 import tud_rl.agents.continuous as agents
 from tud_rl import logger
@@ -28,7 +18,16 @@ from tud_rl.common.configparser import ConfigFile
 from tud_rl.common.logging_func import EpochLogger
 from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
-from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapper
+from tud_rl.explainability.action_selection_wrapper import ActionSelectionWrapperIPdp
+
+
+from ixai.explainer.pdp import IncrementalPDP
+from ixai.storage.ordered_reservoir_storage import OrderedReservoirStorage
+
+from tud_rl.explainability.feature_importance import (
+    calculate_feature_importance_iPDP,
+    save_feature_importance_to_csv,
+)
 
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
@@ -203,9 +202,7 @@ def train(config: ConfigFile, agent_name: str):
     now = now.strftime("%Y-%m-%d_%H-%M")
 
     if ON_HPC:
-        PLOT_DIR_IPDP = os.path.join(
-            "./", now
-        )
+        PLOT_DIR_IPDP = os.path.join("./", now)
     else:
         PLOT_DIR_IPDP = os.path.join(
             "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/iPDP/",
@@ -221,8 +218,7 @@ def train(config: ConfigFile, agent_name: str):
         if not os.path.exists(os.path.join(PLOT_DIR_IPDP, f"feature_{i}")):
             os.makedirs(os.path.join(PLOT_DIR_IPDP, f"feature_{i}"))
 
-    # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
-    model_function = ActionSelectionWrapper(agent.select_action)
+    model_function = ActionSelectionWrapperIPdp(agent.select_action)
 
     incremental_explainer_array = []
     for i in feature_order:
@@ -293,7 +289,7 @@ def train(config: ConfigFile, agent_name: str):
                     show_pdp_transition=False,  # True: plot iPDPs in PDP storage. Same blending strategy as for ICE curves default: True
                     show_ice_curves=False,  # True: plot ICE curves in ICE storage (with blending). default: True
                     y_min=-1.0,
-                    y_max=1.0,  # TODO make dependable on. Even necessary?
+                    y_max=1.0,
                     x_min=None,
                     x_max=None,  # x/y min/max values for boundaries in plots
                     return_plot=True,  # return values for fig, axes ?!

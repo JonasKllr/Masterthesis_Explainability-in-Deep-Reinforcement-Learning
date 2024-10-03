@@ -10,8 +10,6 @@ import numpy as np
 import pandas as pd
 import torch
 import gym
-from dataclasses import dataclass
-
 
 import tud_rl.agents.continuous as agents
 from tud_rl import logger
@@ -20,21 +18,23 @@ from tud_rl.common.configparser import ConfigFile
 from tud_rl.common.logging_func import EpochLogger
 from tud_rl.common.logging_plot import plot_from_progress
 from tud_rl.wrappers import get_wrapper
-from tud_rl.wrappers.action_selection_wrapper import ActionSelectionWrapperAlibi
+from tud_rl.explainability.action_selection_wrapper import ActionSelectionWrapperAlibi
+
 
 import shap
 from alibi.explainers import ALE, plot_ale, PartialDependence, plot_pd, KernelShap
-from sklearn.tree import DecisionTreeRegressor, plot_tree
-from sklearn.inspection import permutation_importance
 
-from tud_rl.iPDP_helper.feature_importance import (
+from tud_rl.explainability.feature_importance import (
     calculate_feature_importance,
     save_feature_importance_to_csv,
     sort_feature_importance_SHAP,
 )
-from tud_rl.iPDP_helper.get_new_states import get_new_states_in_buffer
-from tud_rl.iPDP_helper.timer import Timer
-from tud_rl.iPDP_helper.save_buffer import (save_buffer_to_file, get_actions_on_new_states)
+from tud_rl.explainability.get_new_states import get_new_states_in_buffer
+from tud_rl.explainability.timer import Timer
+from tud_rl.explainability.save_buffer import (
+    save_buffer_to_file,
+    get_actions_on_new_states,
+)
 
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
@@ -104,10 +104,6 @@ def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
     # continue training
     agent.mode = "train"
     return rets
-
-
-
-
 
 
 def train(config: ConfigFile, agent_name: str):
@@ -367,7 +363,7 @@ def train(config: ConfigFile, agent_name: str):
                     X=new_states, min_bin_points=10
                 )
                 axes = plot_ale(ale_explanations, n_cols=3)
-                
+
                 # remove legend from ALE plots
                 for ax in axes.ravel():
                     legend = ax.get_legend()
