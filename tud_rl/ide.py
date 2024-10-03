@@ -12,6 +12,7 @@ import tud_rl.run.train_continuous_iPDP as cont_iPDP
 import tud_rl.run.train_continuous_explainer as cont_explainer
 import tud_rl.run.train_discrete as discr
 import tud_rl.run.visualize_continuous as vizcont
+import tud_rl.run.visualize_continuous_explainer as vizcont_expl
 import tud_rl.run.visualize_discrete as vizdiscr
 from tud_rl.agents import is_discrete, validate_agent
 from tud_rl.common.configparser import ConfigFile
@@ -21,16 +22,20 @@ from tud_rl.configs.discrete_actions import __path__ as discr_path
 # ---------------- User Settings -----------------------------
 # ------------------------------------------------------------
 
-TASK = "train"  # ["train", "viz"]
+TASK = "viz"  # ["train", "viz"]
 CONFIG_FILE = "ski_mdp.yaml"  # configuration file as `.yaml` or `.json`
 SEED = 42  # [1.) 42, 2.) 30, 3.) 20] set a seed different to the one specified in your config
 AGENT_NAME = "DDPG"  # agent to train/viz
 DQN_WEIGHTS = None  # path to file for weight initialization (discrete actions)
-ACTOR_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
-CRITIC_WEIGHTS = None  #'/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/2024-06-11_21-05/experiments/DDPG_Ski-v0_MDP_2024-06-11_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
+ACTOR_WEIGHTS = '/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/final/explanations_4mil_final/plots/explainer_1_interrupted/experiments/DDPG_Ski-v0_MDP_2024-08-15_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
+CRITIC_WEIGHTS = '/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/final/explanations_4mil_final/plots/explainer_1_interrupted/experiments/DDPG_Ski-v0_MDP_2024-08-15_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
+# ACTOR_WEIGHTS = "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/final/without_explanation_8mil/explainer_1/experiments/DDPG_Ski-v0_MDP_2024-08-17_42//DDPG_actor_weights.pth"
+# CRITIC_WEIGHTS = "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/final/without_explanation_8mil/explainer_1/experiments/DDPG_Ski-v0_MDP_2024-08-17_42//DDPG_critic_weights.pth"
 
 COMPUTE_iPDP = False
 COMPUTE_BATCH_EXPLAINERS = True
+
+SURROGATE_TREE = True
 # ------------------------------------------------------------
 # ------------------------------------------------------------
 
@@ -79,7 +84,13 @@ if TASK == "train":
         else:
             cont.train(config, AGENT_NAME)
 elif TASK == "viz":
-    if discrete:
-        vizdiscr.test(config, AGENT_NAME)
+    if SURROGATE_TREE:
+        if discrete:
+            vizdiscr.test(config, AGENT_NAME)
+        else:
+            vizcont_expl.test(config, AGENT_NAME)
     else:
-        vizcont.test(config, AGENT_NAME)
+        if discrete:
+            vizdiscr.test(config, AGENT_NAME)
+        else:
+            vizcont.test(config, AGENT_NAME)
