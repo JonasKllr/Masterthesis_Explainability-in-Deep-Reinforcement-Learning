@@ -8,7 +8,6 @@ without the argument parser.
 import tud_rl.envs
 import tud_rl.run.train_continuous as cont
 import tud_rl.run.train_continuous_iPDP as cont_iPDP
-# import tud_rl.run.train_continuous_PDP as cont_PDP
 import tud_rl.run.train_continuous_explainer as cont_explainer
 import tud_rl.run.train_discrete as discr
 import tud_rl.run.visualize_continuous as vizcont
@@ -22,20 +21,18 @@ from tud_rl.configs.discrete_actions import __path__ as discr_path
 # ---------------- User Settings -----------------------------
 # ------------------------------------------------------------
 
-TASK = "viz"  # ["train", "viz"]
+TASK = "train"  # ["train", "viz"]
 CONFIG_FILE = "ski_mdp.yaml"  # configuration file as `.yaml` or `.json`
-SEED = 42  # [1.) 42, 2.) 30, 3.) 20] set a seed different to the one specified in your config
+SEED = 42  # set a seed different to the one specified in your config
 AGENT_NAME = "DDPG"  # agent to train/viz
 DQN_WEIGHTS = None  # path to file for weight initialization (discrete actions)
-ACTOR_WEIGHTS = '/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/final/explanations_4mil_final/plots/explainer_1_interrupted/experiments/DDPG_Ski-v0_MDP_2024-08-15_42/DDPG_actor_best_weights.pth'             # path to file for weight initialization (continuous actions)
-CRITIC_WEIGHTS = '/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/final/explanations_4mil_final/plots/explainer_1_interrupted/experiments/DDPG_Ski-v0_MDP_2024-08-15_42/DDPG_critic_best_weights.pth'           # path to file for weight initialization (continuous actions)
-# ACTOR_WEIGHTS = "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/final/without_explanation_8mil/explainer_1/experiments/DDPG_Ski-v0_MDP_2024-08-17_42//DDPG_actor_weights.pth"
-# CRITIC_WEIGHTS = "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/plots/final/without_explanation_8mil/explainer_1/experiments/DDPG_Ski-v0_MDP_2024-08-17_42//DDPG_critic_weights.pth"
+ACTOR_WEIGHTS = None  # path to file for weight initialization (continuous actions)
+CRITIC_WEIGHTS = None  # path to file for weight initialization (continuous actions)
 
-COMPUTE_iPDP = False
+# choice of explainers
+COMPUTE_IPDP = False
 COMPUTE_BATCH_EXPLAINERS = True
-
-SURROGATE_TREE = True
+VIZ_SURROGATE_TREE_OUTPUTS = False
 # ------------------------------------------------------------
 # ------------------------------------------------------------
 
@@ -76,7 +73,7 @@ if TASK == "train":
             config=config,
             agent_name=AGENT_NAME,
         )
-    elif COMPUTE_iPDP == True:
+    elif COMPUTE_IPDP == True:
         cont_iPDP.train(config=config, agent_name=AGENT_NAME)
     else:
         if discrete:
@@ -84,7 +81,7 @@ if TASK == "train":
         else:
             cont.train(config, AGENT_NAME)
 elif TASK == "viz":
-    if SURROGATE_TREE:
+    if VIZ_SURROGATE_TREE_OUTPUTS:
         if discrete:
             vizdiscr.test(config, AGENT_NAME)
         else:
