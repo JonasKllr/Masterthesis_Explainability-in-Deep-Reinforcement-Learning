@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import torch
 import gym
+from dataclasses import dataclass
 
 
 import tud_rl.agents.continuous as agents
@@ -36,7 +37,7 @@ from tud_rl.iPDP_helper.feature_importance import (
     save_r_squared_to_csv_tree,
 )
 from tud_rl.iPDP_helper.get_new_states import get_new_states_in_buffer
-from tud_rl.iPDP_helper.timer_to_csv import save_timer_to_csv
+from tud_rl.iPDP_helper.timer import Timer
 from tud_rl.iPDP_helper.save_buffer import save_buffer_to_file
 
 
@@ -107,6 +108,10 @@ def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
     # continue training
     agent.mode = "train"
     return rets
+
+
+
+
 
 
 def train(config: ConfigFile, agent_name: str):
@@ -201,13 +206,12 @@ def train(config: ConfigFile, agent_name: str):
     # ----------------------------- init explanations --------------------------------
     # --------------------------------------------------------------------------------
 
-    ON_HPC = True
+    ON_HPC = False
 
     PDP_CALCULATE = True
-    ALE_CALCULATE = True
-    SHAP_CALCULATE = True
-    SURROGATE_TREE_CALCULATE = False
-    SAVE_BUFFER = True
+    ALE_CALCULATE = False
+    SHAP_CALCULATE = False
+    SAVE_BUFFER = False
 
     EXPLAIN_FREQUENCY = 5000
     if ON_HPC:
@@ -223,7 +227,6 @@ def train(config: ConfigFile, agent_name: str):
         PLOT_DIR_PDP = os.path.join("./", now, "pdp/")
         PLOT_DIR_ALE = os.path.join("./", now, "ale/")
         PLOT_DIR_SHAP = os.path.join("./", now, "SHAP/")
-        PLOT_DIR_TREE = os.path.join("./", now, "tree/")
         PLOT_DIR_BUFFER = os.path.join("./", now, "buffer/")
 
         if PDP_CALCULATE:
@@ -236,9 +239,6 @@ def train(config: ConfigFile, agent_name: str):
             for i in feature_order:
                 if not os.path.exists(os.path.join(PLOT_DIR_SHAP, f"feature_{i}")):
                     os.makedirs(os.path.join(PLOT_DIR_SHAP, f"feature_{i}"))
-        if SURROGATE_TREE_CALCULATE:
-            if not os.path.exists(PLOT_DIR_TREE):
-                os.makedirs(PLOT_DIR_TREE)
         if SAVE_BUFFER:
             if not os.path.exists(PLOT_DIR_BUFFER):
                 os.makedirs(PLOT_DIR_BUFFER)
@@ -259,11 +259,6 @@ def train(config: ConfigFile, agent_name: str):
             now,
             "SHAP/",
         )
-        PLOT_DIR_TREE = os.path.join(
-            "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
-            now,
-            "tree/",
-        )
         PLOT_DIR_BUFFER = os.path.join(
             "/media/jonas/SSD_new/CMS/Semester_5/Masterarbeit/code/TUD_RL/experiments/feature_importance",
             now,
@@ -280,15 +275,11 @@ def train(config: ConfigFile, agent_name: str):
             for i in feature_order:
                 if not os.path.exists(os.path.join(PLOT_DIR_SHAP, f"feature_{i}")):
                     os.makedirs(os.path.join(PLOT_DIR_SHAP, f"feature_{i}"))
-        if SURROGATE_TREE_CALCULATE:
-            if not os.path.exists(PLOT_DIR_TREE):
-                os.makedirs(PLOT_DIR_TREE)
         if SAVE_BUFFER:
             if not os.path.exists(PLOT_DIR_BUFFER):
                 os.makedirs(PLOT_DIR_BUFFER)
 
     agent.mode = "test"
-    # wrap agent.select_action() s.t. it takes a dict as input and outputs a dict
     model_function = ActionSelectionWrapperAlibi(
         action_selection_function=agent.select_action
     )
@@ -300,16 +291,14 @@ def train(config: ConfigFile, agent_name: str):
         feature_names.append(feature_name)
 
     if PDP_CALCULATE:
-        pdp_timer = 0.0
+        pdp_timer = Timer()
     if ALE_CALCULATE:
-        ale_timer = 0.0
+        ale_timer = Timer()
     if SHAP_CALCULATE:
-        SHAP_timer = 0.0
-    if SURROGATE_TREE_CALCULATE:
-        tree_timer = 0.0
+        SHAP_timer = Timer()
 
     # --------------------------------------------------------------------------------
-    # ----------------------------- init explanations --------------------------------
+    # ----------------------------- init explanations end ----------------------------
     # --------------------------------------------------------------------------------
 
     # main loop
@@ -323,7 +312,7 @@ def train(config: ConfigFile, agent_name: str):
         if not ON_HPC:
             print(total_steps)
 
-        # calculate explanations for every EXPLAIN_FREQUENCY
+        # calculate explanations with a frequency of EXPLAIN_FREQUENCY
         if total_steps != 0 and total_steps % EXPLAIN_FREQUENCY == 0:
             agent.mode = "test"
             new_states = get_new_states_in_buffer(
@@ -332,7 +321,7 @@ def train(config: ConfigFile, agent_name: str):
 
             if PDP_CALCULATE:
                 print("calculating PDP")
-                pdp_start_time = time.time()
+                pdp_timer.start_time = time.time()
 
                 pdp_explainer = PartialDependence(
                     predictor=model_function,
@@ -352,26 +341,26 @@ def train(config: ConfigFile, agent_name: str):
                 plt.clf()
                 plt.close("all")
 
-                feature_importance_array_pdp = [None] * len(feature_order)
+                feature_importance_pdp = [None] * len(feature_order)
                 for i in feature_order:
-                    feature_importance_array_pdp[i] = calculate_feature_importance(
+                    feature_importance_pdp[i] = calculate_feature_importance(
                         y_values=pdp_explanations.pd_values[i][0, :],
                     )
                 save_feature_importance_to_csv_pdp(
                     feature_order,
-                    feature_importance_array_pdp,
+                    feature_importance_pdp,
                     total_steps,
                     PLOT_DIR_PDP,
                 )
 
-                pdp_end_time = time.time()
-                pdp_time_elapsed = pdp_end_time - pdp_start_time
-                pdp_timer += pdp_time_elapsed
-                save_timer_to_csv(pdp_timer, total_steps, PLOT_DIR_PDP)
+                pdp_timer.end_time = time.time()
+                pdp_timer.calculate_elapsed_time()
+                pdp_timer.update_time_accumulated()
+                pdp_timer.save_time_to_csv(total_steps, PLOT_DIR_PDP)
 
             if ALE_CALCULATE:
                 print("calculating ALE")
-                ale_start_time = time.time()
+                ale_timer.start_time = time.time()
 
                 ale_explainer = ALE(
                     predictor=model_function,
@@ -411,14 +400,14 @@ def train(config: ConfigFile, agent_name: str):
                     PLOT_DIR_ALE,
                 )
 
-                ale_end_time = time.time()
-                ale_time_elapsed = ale_end_time - ale_start_time
-                ale_timer += ale_time_elapsed
-                save_timer_to_csv(ale_timer, total_steps, PLOT_DIR_ALE)
+                ale_timer.end_time = time.time()
+                ale_timer.calculate_elapsed_time()
+                ale_timer.update_time_accumulated()
+                ale_timer.save_time_to_csv(total_steps, PLOT_DIR_ALE)
 
             if SHAP_CALCULATE:
                 print("calculating SHAP")
-                SHAP_start_time = time.time()
+                SHAP_timer.start_time = time.time()
 
                 shap_explainer = KernelShap(
                     predictor=model_function,
@@ -475,81 +464,10 @@ def train(config: ConfigFile, agent_name: str):
                     feature_order, sorted_feature_importance, total_steps, PLOT_DIR_SHAP
                 )
 
-                SHAP_end_time = time.time()
-                SHAP_time_elapsed = SHAP_end_time - SHAP_start_time
-                SHAP_timer += SHAP_time_elapsed
-                save_timer_to_csv(SHAP_timer, total_steps, PLOT_DIR_SHAP)
-
-            if SURROGATE_TREE_CALCULATE:
-                print("calculating tree")
-                tree_start_time = time.time()
-
-                # get current actions on new_states
-                new_actions = np.zeros(shape=np.shape(new_states)[0])
-                for i in range(np.shape(new_states)[0]):
-                    new_actions[i] = agent.select_action(new_states[i, :])
-
-                # surrogate_tree = DecisionTreeRegressor(max_depth=10)
-                surrogate_tree = DecisionTreeRegressor(max_depth=None)
-                surrogate_tree.fit(X=new_states, y=new_actions)
-
-                # permutation feature importance
-                feature_importance = permutation_importance(
-                    estimator=surrogate_tree,
-                    X=new_states,
-                    y=new_actions,
-                    n_repeats=5,
-                    random_state=42,
-                    n_jobs=-1,
-                )
-                sorted_importances_idx = feature_importance.importances_mean.argsort()
-
-                # casting feature_names to ndarry just for the following plotting
-                feature_names_np = np.array(feature_names)
-
-                # plot feature importance
-                importances = pd.DataFrame(
-                    feature_importance.importances[sorted_importances_idx].T,
-                    columns=feature_names_np[sorted_importances_idx],
-                )
-                ax = importances.plot.box(vert=False, whis=10)
-                ax.set_title("Permutation Importances")
-                ax.axvline(x=0, color="k", linestyle="--")
-                ax.set_xlabel("Decrease in accuracy score")
-                ax.figure.tight_layout()
-                plt.savefig(os.path.join(PLOT_DIR_TREE, f"{total_steps}_FI.pdf"))
-                plt.clf()
-                plt.close("all")
-
-                # plot tree
-                plt.figure(figsize=(20, 10))
-                plot_tree(
-                    decision_tree=surrogate_tree,
-                    feature_names=feature_names,
-                    max_depth=3,
-                    filled=True,
-                    fontsize=12,
-                    proportion=True,
-                )
-                plt.savefig(os.path.join(PLOT_DIR_TREE, f"{total_steps}_tree.pdf"))
-                plt.clf()
-                plt.close("all")
-
-                mean_feature_imortance = feature_importance.importances_mean
-                save_feature_importance_to_csv_tree(
-                    feature_order, mean_feature_imortance, total_steps, PLOT_DIR_TREE
-                )
-
-                # coefficient of determination
-                r_squared = surrogate_tree.score(X=new_states, y=new_actions)
-                save_r_squared_to_csv_tree(
-                    r_squared, total_steps, save_dir=PLOT_DIR_TREE
-                )
-
-                tree_end_time = time.time()
-                tree_time_elapsed = tree_end_time - tree_start_time
-                tree_timer += tree_time_elapsed
-                save_timer_to_csv(tree_timer, total_steps, PLOT_DIR_TREE)
+                SHAP_timer.end_time = time.time()
+                SHAP_timer.calculate_elapsed_time()
+                SHAP_timer.update_time_accumulated
+                SHAP_timer.save_time_to_csv(total_steps, PLOT_DIR_SHAP)
 
             if SAVE_BUFFER:
                 print("saving buffer to file")
@@ -563,7 +481,7 @@ def train(config: ConfigFile, agent_name: str):
 
             agent.mode = "train"
         # --------------------------------------------------------------------------------
-        # ------------- explanations -----------------------------------------------------
+        # ------------- explanations end -------------------------------------------------
         # --------------------------------------------------------------------------------
 
         # select action
