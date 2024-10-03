@@ -29,16 +29,12 @@ from sklearn.inspection import permutation_importance
 
 from tud_rl.iPDP_helper.feature_importance import (
     calculate_feature_importance,
-    save_feature_importance_to_csv_pdp,
-    save_feature_importance_to_csv_ale,
+    save_feature_importance_to_csv,
     sort_feature_importance_SHAP,
-    save_feature_importance_to_csv_SHAP,
-    save_feature_importance_to_csv_tree,
-    save_r_squared_to_csv_tree,
 )
 from tud_rl.iPDP_helper.get_new_states import get_new_states_in_buffer
 from tud_rl.iPDP_helper.timer import Timer
-from tud_rl.iPDP_helper.save_buffer import save_buffer_to_file
+from tud_rl.iPDP_helper.save_buffer import (save_buffer_to_file, get_actions_on_new_states)
 
 
 def evaluate_policy(test_env: gym.Env, agent: _Agent, c: ConfigFile):
@@ -209,9 +205,9 @@ def train(config: ConfigFile, agent_name: str):
     ON_HPC = False
 
     PDP_CALCULATE = True
-    ALE_CALCULATE = False
-    SHAP_CALCULATE = False
-    SAVE_BUFFER = False
+    ALE_CALCULATE = True
+    SHAP_CALCULATE = True
+    SAVE_BUFFER = True
 
     EXPLAIN_FREQUENCY = 5000
     if ON_HPC:
@@ -346,7 +342,7 @@ def train(config: ConfigFile, agent_name: str):
                     feature_importance_pdp[i] = calculate_feature_importance(
                         y_values=pdp_explanations.pd_values[i][0, :],
                     )
-                save_feature_importance_to_csv_pdp(
+                save_feature_importance_to_csv(
                     feature_order,
                     feature_importance_pdp,
                     total_steps,
@@ -370,15 +366,15 @@ def train(config: ConfigFile, agent_name: str):
                 ale_explanations = ale_explainer.explain(
                     X=new_states, min_bin_points=10
                 )
-
-                # remove legend from ALE plots
                 axes = plot_ale(ale_explanations, n_cols=3)
+                
+                # remove legend from ALE plots
                 for ax in axes.ravel():
                     legend = ax.get_legend()
                     if legend:
                         legend.remove()
 
-                # if ALE values are in range [-1, 1]
+                # adapt plots to range of ALE values
                 min_ale_value = np.min(np.concatenate(ale_explanations.ale_values))
                 max_ale_value = np.max(np.concatenate(ale_explanations.ale_values))
                 if (min_ale_value < -1) or (max_ale_value > 1):
@@ -388,14 +384,14 @@ def train(config: ConfigFile, agent_name: str):
                 plt.savefig(os.path.join(PLOT_DIR_ALE, f"{total_steps}.pdf"))
                 plt.close("all")
 
-                feature_importance_array_ale = [None] * len(feature_order)
+                feature_importance_ale = [None] * len(feature_order)
                 for i in feature_order:
-                    feature_importance_array_ale[i] = calculate_feature_importance(
+                    feature_importance_ale[i] = calculate_feature_importance(
                         np.reshape(ale_explanations.ale_values[i], (-1,))
                     )
-                save_feature_importance_to_csv_ale(
+                save_feature_importance_to_csv(
                     feature_order,
-                    feature_importance_array_ale,
+                    feature_importance_ale,
                     total_steps,
                     PLOT_DIR_ALE,
                 )
@@ -421,22 +417,13 @@ def train(config: ConfigFile, agent_name: str):
                     n_background_samples=200,
                 )
 
+                # getting 200 randomly sampled data points
                 random_sample_id = np.random.choice(
                     new_states.shape[0], size=200, replace=False
                 )
                 shap_explanations = shap_explainer.explain(
                     X=new_states[random_sample_id]
                 )
-
-                shap.summary_plot(
-                    shap_values=shap_explanations.shap_values[0],
-                    feature_names=feature_names,
-                    show=False,
-                    plot_type="bar",
-                )
-                plt.savefig(os.path.join(PLOT_DIR_SHAP, f"{total_steps}.pdf"))
-                plt.clf()
-                plt.close("all")
 
                 for i in feature_order:
                     shap.dependence_plot(
@@ -460,7 +447,7 @@ def train(config: ConfigFile, agent_name: str):
                 sorted_feature_importance = sort_feature_importance_SHAP(
                     ranked_feature_importance
                 )
-                save_feature_importance_to_csv_SHAP(
+                save_feature_importance_to_csv(
                     feature_order, sorted_feature_importance, total_steps, PLOT_DIR_SHAP
                 )
 
@@ -471,10 +458,7 @@ def train(config: ConfigFile, agent_name: str):
 
             if SAVE_BUFFER:
                 print("saving buffer to file")
-                # get current actions on new_states
-                new_actions = np.zeros(shape=np.shape(new_states)[0])
-                for i in range(np.shape(new_states)[0]):
-                    new_actions[i] = agent.select_action(new_states[i, :])
+                new_actions = get_actions_on_new_states(new_states, agent)
 
                 save_buffer_to_file(new_states, PLOT_DIR_BUFFER, kind="states")
                 save_buffer_to_file(new_actions, PLOT_DIR_BUFFER, kind="actions")

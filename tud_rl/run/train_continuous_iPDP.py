@@ -18,7 +18,7 @@ from ixai.storage.ordered_reservoir_storage import OrderedReservoirStorage
 
 from tud_rl.iPDP_helper.feature_importance import (
     calculate_feature_importance_iPDP,
-    save_feature_importance_to_csv_pdp,
+    save_feature_importance_to_csv,
 )
 
 import tud_rl.agents.continuous as agents
@@ -322,7 +322,7 @@ def train(config: ConfigFile, agent_name: str):
             plt.clf()
             plt.close("all")
 
-            save_feature_importance_to_csv_pdp(
+            save_feature_importance_to_csv(
                 feature_order, feature_importance_array, total_steps, PLOT_DIR_IPDP
             )
 
