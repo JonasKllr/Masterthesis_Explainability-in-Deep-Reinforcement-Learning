@@ -42,7 +42,7 @@ The state was represented by six features:
 \end{array}
 \right)$$ -->
 
-$$\dot{d}$$
+$$\ddot{d}$$
 
 ### Bibliography
 
