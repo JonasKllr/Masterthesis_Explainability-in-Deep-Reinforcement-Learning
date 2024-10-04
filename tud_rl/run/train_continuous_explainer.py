@@ -29,7 +29,7 @@ from tud_rl.explainability.feature_importance import (
     save_feature_importance_to_csv,
     sort_feature_importance_SHAP,
 )
-from tud_rl.explainability.get_new_states import get_new_states_in_buffer
+from tud_rl.explainability.get_new_states import get_new_states_from_buffer
 from tud_rl.explainability.timer import Timer
 from tud_rl.explainability.save_buffer import (
     save_buffer_to_file,
@@ -307,7 +307,7 @@ def train(config: ConfigFile, agent_name: str):
         # calculate explanations with a frequency of EXPLAIN_FREQUENCY
         if total_steps != 0 and total_steps % EXPLAIN_FREQUENCY == 0:
             agent.mode = "test"
-            new_states = get_new_states_in_buffer(
+            new_states = get_new_states_from_buffer(
                 agent.replay_buffer.s, agent.replay_buffer.ptr, EXPLAIN_FREQUENCY
             )
 
