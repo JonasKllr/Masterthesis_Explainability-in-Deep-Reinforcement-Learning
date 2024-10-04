@@ -37,8 +37,8 @@ The state was represented by six features:
 	\end{array}
 	\right)$$ -->
 $$s_{t} = \left( \begin{array}{c}
-&\frac{a}{b} \\
-&\frac{a}{b}
+\frac{a}{b} \\
+\frac{a}{b}
 \end{array}
 \right)$$
 
