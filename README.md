@@ -1,3 +1,8 @@
+The aim of my thesis was to implement methods of explainability on a deep reinforcement learning agent.
+The code for the agent and the environment it was applied in was given by the RL Dresden Algorithm Suite.
+
+The thesis' content is in the subfolder [tud_rl/explainability/](tud_rl/explainability/).
+
 # RL Dresden Algorithm Suite
 
 This suite implements several model-free off-policy deep reinforcement learning algorithms for discrete and continuous action spaces in PyTorch.
