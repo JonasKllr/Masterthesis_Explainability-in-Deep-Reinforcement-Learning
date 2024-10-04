@@ -36,11 +36,13 @@ The state was represented by six features:
 		\frac{y_{t,agent}-y_{t,i}}{y_{scale}}
 	\end{array}
 	\right)$$ -->
-$$s_{t} = \left( \begin{array}{c}
+<!-- $$s_{t} = \left( \begin{array}{c}
 \frac{y_{t,agent}}{a_{y,max}} \\
 \frac{a}{b}
 \end{array}
-\right)$$
+\right)$$ -->
+
+$$\dot{d}$$
 
 ### Bibliography
 
