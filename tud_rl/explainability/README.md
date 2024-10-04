@@ -37,7 +37,7 @@ The state was represented by six features:
 	\end{array}
 	\right)$$ -->
 $$s_{t} = \left( \begin{array}{c}
-\frac{\dot{y}_{t,agent}}{a_{y,max}} \\
+\frac{y_{t,agent}}{a_{y,max}} \\
 \frac{a}{b}
 \end{array}
 \right)$$
