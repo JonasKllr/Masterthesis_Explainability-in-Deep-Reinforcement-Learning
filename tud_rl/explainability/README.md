@@ -42,7 +42,7 @@ The state was represented by six features:
 \end{array}
 \right)$$ -->
 
-$$ \frac{\ddot{d}_{t}}{a}$$
+$$ \frac{\ddot{d}_{t,agent}}{a}$$
 
 ### Bibliography
 
