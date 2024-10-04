@@ -42,7 +42,16 @@ The state was represented by six features:
 \end{array}
 \right)$$ -->
 
-$$ \frac{\ddot{d}_{t,agent}}{a_{y}} $$
+<!-- $$ \frac{\ddot{d}_{t,agent}}{a_{y}} $$ -->
+
+$$s_{t} = \begin{bmatrix}
+    \frac{\ddot{y}_{t,\text{agent}}}{a_{y,\text{max}}} \\
+    \frac{\dot{y}_{t,\text{agent}}}{v_{y,\text{max}}} \\
+    \frac{\dot{x}_{t,\text{agent}}-\dot{x}_{t,i}}{v_{x,\text{max}}} \\
+    \frac{\dot{y}_{t,\text{agent}}-\dot{y}_{t,i}}{v_{y,\text{max}}} \\
+    \frac{x_{t,\text{agent}}-x_{t,i}}{x_{\text{scale}}} \\
+    \frac{y_{t,\text{agent}}-y_{t,i}}{y_{\text{scale}}}
+\end{bmatrix}$$
 
 ### Bibliography
 
