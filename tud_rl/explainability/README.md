@@ -19,10 +19,14 @@ However, the decision tree failed to approximate the agent's actions effectively
 
 ### Case Study: Obstacle Avoidance
 The RL agent was trained in a simple two-dimensional environment consisting of two moving obstacles with a constant distance relative to each other.
-The agent's aim was to pass in between the obstacles.
+The agent's aim was to pass in between the obstacles. [1]
 
-![some discription](./img/env.pdf "some discription") 
-
+<!-- ![some discription](./img/env.png "some discription")  -->
+|<img src="./img/env.png" alt="drawing" width="300"/>|
+|:--:|
+|*Obstacle avoidance environment taken from [1]*|
 
 
 ### Bibliography
+
+[1] Hart, Fabian, Martin Waltz and Ostap Okhrin: Missing Velocity in Dynamic Obstacle Avoidance based on Deep Reinforcement Learning. arXiv preprint arXiv:2112.12465, 2021.
