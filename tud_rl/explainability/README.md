@@ -27,7 +27,7 @@ The agent's aim was to pass in between the obstacles. [1]
 |*Obstacle avoidance environment taken from [1]*|
 
 The state was represented by six features:
-$$s_{t} \coloneq
+$$s_{t} =
 	\left(
 	\begin{array}{c}
 		\frac{\ddot{y}_{t,agent}}{a_{y,max}} \\
