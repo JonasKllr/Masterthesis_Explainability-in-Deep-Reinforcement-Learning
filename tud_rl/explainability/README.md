@@ -42,7 +42,7 @@ The state was represented by six features:
 \end{array}
 \right)$$ -->
 
-$$\ddot{d}_{t}$$
+$$ \frac{\ddot{d}_{t}}{a}$$
 
 ### Bibliography
 
