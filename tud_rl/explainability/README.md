@@ -38,7 +38,7 @@ $$s_{t} =\left(\begin{array}{c}
 
 Based on the state representation, the agent computed an action $a_{t} \in [-1,1]$.
 This action was then mapped to the agent's acceleration in lateral direction:
-$$\ddot{y}_{t+1,agent} = \ddot{y}_{t,agent} + \Delta a_{y,max} \cdot a_{t}$$
+$\ddot{y}_{t+1,agent} = \ddot{y}_{t,agent} + \Delta a_{y,max} \cdot a_{t}$
 
 
 The DRL agent was trained for 4000000 time steps.
