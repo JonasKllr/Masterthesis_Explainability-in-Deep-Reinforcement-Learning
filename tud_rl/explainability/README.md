@@ -67,7 +67,6 @@ PDP, ALE and SHAP produced similar results in terms of feature importance of the
 |ALE Results|
 |:--:|
 |<img src="./img/ale.png" alt="drawing" width="550"/>|
-|:--:|
 |*ALEs of the individual features in the state representation at time step $2*10^{6}$.*|
 |<img src="./img/ale_feature-importance.png" alt="drawing" width="650"/>|
 |*Feature importance calculated based on the ALE over the agent's training process for $4*10^{6}$ time steps.*|
@@ -75,7 +74,6 @@ PDP, ALE and SHAP produced similar results in terms of feature importance of the
 |SHAP Results|
 |:--:|
 |<img src="./img/ale.png" alt="drawing" width="550"/>|
-|:--:|
 |*SHAP dependence plots of the individual features in the state representation at time step $2*10^{6}$. 200 data points were used for the calculation*|
 |<img src="./img/ale_feature-importance.png" alt="drawing" width="650"/>|
 |*Feature importance calculated based on SHAP over the agent's training process for $4*10^{6}$ time steps.*|
