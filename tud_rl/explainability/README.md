@@ -41,8 +41,8 @@ This action was then mapped to the agent's acceleration in lateral direction:
 $$\ddot{y}_{t+1,agent} = \ddot{y}_{t,agent} + \Delta a_{y,max} \cdot a_{t}$$
 
 
-The DRL agent was trained for 4000000 time steps.
-During the training, the above mentioned explainability methods PDP, ALE and SHAP where applied with a frequency of 100000 time steps.
+The DRL agent was trained for $4*10^{6}$ time steps.
+During the training, the above mentioned explainability methods PDP, ALE and SHAP where applied with a frequency of $10^{5}$ time steps.
 Furthermore, the incremental PDP (iPDP) [2], an adaption of the PDP to dynamic modeling scearios, was applied at every time step.
 The aim was to investigate, how the importance of the individual feautres for the agent's decisions changed over time with a progressing training process.
 
@@ -55,14 +55,20 @@ The iPDP resulted in an average increase of runtime of 10.32 hours compared to t
 This was considered to be unfeasable for the method to work in this scenario.
 Thereofore, no further investigations were conducted on the iPDP.
 
+PDP, ALE and SHAP produced similar results in terms of feature importance of the individual feautres:
+
 |<img src="./img/pdp.png" alt="drawing" width="550"/>|
-|:--:|
-|*PDPs of the individual features in the state representation at time step 2000000.*|
-
+<!-- |:--:| -->
+|*PDPs of the individual features in the state representation at time step $2*10^{6}$.*|
+<!-- |:--:| -->
 |<img src="./img/pdp_feature-importance.png" alt="drawing" width="650"/>|
-|:--:|
-|*Feature importance calculated based on the PDP over the agent's training process for 4000000 time steps.*|
+<!-- |:--:| -->
+|*Feature importance calculated based on the PDP over the agent's training process for $4*10^{6}$ time steps.*|
 
+
+|<img src="./img/ale.png" alt="drawing" width="550"/>|
+|:--:|
+|*ALEs of the individual features in the state representation at time step $2*10^{6}$.*|
 
 ### Bibliography
 
