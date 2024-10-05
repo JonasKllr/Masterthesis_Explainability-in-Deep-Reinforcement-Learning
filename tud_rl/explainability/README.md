@@ -60,7 +60,7 @@ PDP, ALE and SHAP produced similar results in terms of feature importance of the
 |PDP Results|
 |:--:|
 |<img src="./img/pdp.png" alt="drawing" width="550"/>|
-|*PDPs of the individual features in the state representation at time step $2 \cdot 10^{6}$.*|
+|PDPs of the individual features in the state representation at time step $2 \cdot 10^{6}$.|
 |<img src="./img/pdp_feature-importance.png" alt="drawing" width="650"/>|
 |*Feature importance calculated based on the PDP over the agent's training process for $4 \cdot 10^{6}$ time steps.*|
 
