@@ -59,7 +59,7 @@ Thereofore, no further investigations were conducted on the iPDP.
 |:--:|
 |*PDPs of the individual features in the state representation at time step 2000000.*|
 
-|<img src="./img/pdp_feature-importance.png" alt="drawing" width="550"/>|
+|<img src="./img/pdp_feature-importance.png" alt="drawing" width="650"/>|
 |:--:|
 |*Feature importance calculated based on the PDP over the agent's training process for 4000000 time steps.*|
 
