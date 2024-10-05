@@ -21,13 +21,12 @@ However, the decision tree failed to approximate the agent's actions effectively
 The RL agent was trained in a simple two-dimensional environment consisting of two moving obstacles with a constant distance relative to each other.
 The agent's aim was to pass in between the obstacles. [1]
 
-<!-- ![some discription](./img/env.png "some discription")  -->
 |<img src="./img/env.png" alt="drawing" width="300"/>|
 |:--:|
 |*Obstacle avoidance environment taken from [1]*|
 
 The state was represented by six features:
-<!-- $$s_{t} =\left(\begin{array}{c}
+$$s_{t} =\left(\begin{array}{c}
 		\frac{\ddot{y}_{t,agent}}{a_{y,max}} \\
 		\frac{\dot{y}_{t,agent}}{v_{y,max}} \\
 		\frac{\dot{x}_{t,agent}-\dot{x_{t,i}}}{v_{x,max}} \\
@@ -35,24 +34,26 @@ The state was represented by six features:
 		\frac{x_{t,agent}-x_{t,i}}{x_{scale}} \\
 		\frac{y_{t,agent}-y_{t,i}}{y_{scale}}
 	\end{array}
-	\right)$$ -->
-<!-- $$s_{t} = \left( \begin{array}{c}
-\frac{y_{t,agent}}{a_{y,max}} \\
-\frac{a}{b}
-\end{array}
-\right)$$ -->
+	\right)$$
 
-$$ \frac{\ddot{d}_{t,\text{agent}}}{a_{y,\text{max}}} $$
+Based on the state representation, the agent computed an action $a_{t} \in [-1,1]$.
+This action was then mapped to the agent's acceleration in lateral direction:
+$$\ddot{y}_{t+1,agent} = \ddot{y}_{t,agent} + \Delta a_{y,max} \cdot a_{t}$$
 
-<!-- $s_{t} = \begin{bmatrix}
-    \frac{\ddot{y}_{t,\text{agent}}}{a_{y,\text{max}}} \\
-    \frac{\dot{y}_{t,\text{agent}}}{v_{y,\text{max}}} \\
-    \frac{\dot{x}_{t,\text{agent}}-\dot{x}_{t,i}}{v_{x,\text{max}}} \\
-    \frac{\dot{y}_{t,\text{agent}}-\dot{y}_{t,i}}{v_{y,\text{max}}} \\
-    \frac{x_{t,\text{agent}}-x_{t,i}}{x_{\text{scale}}} \\
-    \frac{y_{t,\text{agent}}-y_{t,i}}{y_{\text{scale}}}
-\end{bmatrix}$ -->
+
+The DRL agent was trained for 4000000 time steps.
+During the training, the above mentioned explainability methods PDP, ALE and SHAP where applied with a frequency of 100000 time steps.
+Furthermore, the incremental PDP (PDP) [2], an adaption of the PDP to dynamic modeling scearios, was applied at every time step.
+The aim was to investigate, how the importance of the individual feautres for the agent's decisions changed over time with a progressing training process.
+
+A decision tree was applied post-hoc as a surrogate model to the agent to investigate, if this method can provide further explanations about the agent's policy.
+
 
 ### Bibliography
 
 [1] Hart, Fabian, Martin Waltz and Ostap Okhrin: Missing Velocity in Dynamic Obstacle Avoidance based on Deep Reinforcement Learning. arXiv preprint arXiv:2112.12465, 2021.
+
+[2] Muschalik, Maximilian, Fabian Fumagalli, Rohit Jagtani, Barbara
+Hammer and Eyke Hüllermeier: iPDP: On Partial Dependence Plots in Dy-
+namic Modeling Scenarios. In World Conference on Explainable Artificial Intelli-
+gence, pages 177–194. Springer, 2023.
