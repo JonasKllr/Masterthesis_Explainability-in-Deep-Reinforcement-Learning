@@ -81,7 +81,7 @@ PDP, ALE and SHAP produced similar results in terms of feature importance of the
 |<img src="./img/ale_feature-importance.png" alt="drawing" width="650"/>|
 |Feature importance calculated based on SHAP over the agent's training process for $4 \cdot 10^{6}$ time steps.|
 
-
+<br>
 <!-- true computational costs -->
 The application of the explainability add computational costs to the agent's training process.
 SHAP introduces by far the highest computational costs, followed by PDP.
@@ -97,7 +97,9 @@ SHAP was calculated on 200 data points radomly sampled from the $10^{5}$ data po
 |:--:|
 |Runtimes of the methods PDP, ALE and SHAP during a single evaluation step at every $10^{5}$ time steps. The runtimes were measured during three training runs with the same settings.|
 
-## Surrogate Model
+### Surrogate Model
+
+The performance of the decision tree was evaluated on the training and test data set by the metrics Mean Absolute Error (MAE) and Mean Squared Error (MSE).
 
 |Depth|MAE training [-]|MSE training [-]|MAE test [-]|MSE test [-]|
 |:---:|:---:|:---:|:---:|:---:|
@@ -105,6 +107,16 @@ SHAP was calculated on 200 data points radomly sampled from the $10^{5}$ data po
 |4|0.584|0.445|0.586|0.447|
 |5|0.584|0.444|0.586|0.448|
 |6|0.583|0.443|0.586|0.448|
+
+<br>
+Furthermore, the decision tree's ability to approximate the agent's decisions was evaluated in newly sampled environments.
+Therefore, the agent was applied in those envornments and the agent's actions were compared to the tree's outputs on the encountered states.
+
+|<img src="./img/agent_vs_tree_1.png" alt="drawing" width="400"/>|<img src="./img/agent_vs_tree_2.png" alt="drawing" width="400"/>|
+|--|--|
+|Comparison of between the agent's actions and the tree's output on the encountered states in two newly sympled environments. The tree used for the visualization had a depth of six.||
+
+
 
 ## Conclusion
 
