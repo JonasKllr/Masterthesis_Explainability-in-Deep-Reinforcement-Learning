@@ -120,7 +120,9 @@ Therefore, the agent was applied in those envornments and the agent's actions we
     <td style="text-align: center;"><img src="./img/agent_vs_tree_2.png" alt="drawing" width="400"/></td>
   </tr>
   <tr>
-    <td colspan="2" style="text-align: center;">Comparison of between the agent's actions and the tree's output on the encountered states in two newly sampled environments. The tree used for the visualization had a depth of six.</td>
+    <td colspan="2">
+      <div align="center">Comparison of the agent's actions and the tree's output on the encountered states in two newly sampled environments. The tree used for the visualization had a depth of six.</div>
+    </td>
   </tr>
 </table>
 
