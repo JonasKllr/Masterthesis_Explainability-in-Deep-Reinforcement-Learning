@@ -87,7 +87,7 @@ At each evaluation step during the training, PDP and ALE were both calculated wi
 The PDP was calculated for five grid points, whereas the number of grid points for the ALE calculation was determined algorithmically such that ten data points fall in each interval vetween two adjacent grid points.
 SHAP was calculated on 200 data points radomly sampled from the $10^{5}$ data points used for PDP and ALE.
 
-|<img src="./img/runtimes.png" alt="drawing" width="400"/>|
+|<img src="./img/runtimes.png" alt="drawing" width="500"/>|
 |:--:|
 |*Runtimes of the methods PDP, ALE and SHAP during a single evaluation step at every $10^{5}$ time steps. The runtimes were measured during multiple training runs with the same settings.*|
 
