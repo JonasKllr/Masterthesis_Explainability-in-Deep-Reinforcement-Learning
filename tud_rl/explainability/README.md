@@ -116,8 +116,8 @@ Therefore, the agent was applied in those envornments and the agent's actions we
 
 <table>
   <tr>
-    <td><img src="./img/agent_vs_tree_1.png" alt="drawing" width="400"/></td>
-    <td><img src="./img/agent_vs_tree_2.png" alt="drawing" width="400"/></td>
+    <td style="text-align: center;"><img src="./img/agent_vs_tree_1.png" alt="drawing" width="400"/></td>
+    <td style="text-align: center;"><img src="./img/agent_vs_tree_2.png" alt="drawing" width="400"/></td>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">Comparison of between the agent's actions and the tree's output on the encountered states in two newly sampled environments. The tree used for the visualization had a depth of six.</td>
