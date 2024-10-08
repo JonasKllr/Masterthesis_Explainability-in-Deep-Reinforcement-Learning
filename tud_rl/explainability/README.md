@@ -43,6 +43,7 @@ $$\ddot{y}_{t+1,agent} = \ddot{y}_{t,agent} + \Delta a_{y,max} \cdot a_{t}$$
 
 The DRL agent was trained for $4 \cdot 10^{6}$ time steps.
 During the training, the above mentioned explainability methods PDP, ALE and SHAP where applied with a frequency of $10^{5}$ time steps.
+At each evaluation step, the states encountered by the agent in the the previous $10^{5}$ time steps were used as the data set for the calcualtion of the explainability methods.
 Furthermore, the incremental PDP (iPDP) [2], an adaption of the PDP to dynamic modeling scearios, was applied at every time step.
 The aim was to investigate, how the importance of the individual feautres for the agent's decisions changed over time with a progressing training process.
 
@@ -77,6 +78,20 @@ PDP, ALE and SHAP produced similar results in terms of feature importance of the
 |SHAP dependence plots of the individual features in the state representation at time step $2 \cdot 10^{6}$. 200 data points were used for the calculation.|
 |<img src="./img/ale_feature-importance.png" alt="drawing" width="650"/>|
 |Feature importance calculated based on SHAP over the agent's training process for $4 \cdot 10^{6}$ time steps.|
+
+
+<!-- todo: True computational costs -->
+
+The methods were applied in a way to address for the trade-off between reliable results by including a high number of data points and keeping the computational costs low.
+At each evaluation step during the training, PDP and ALE were both calculated with the same set of $10^{5}$ data points.
+The PDP was calculated for five grid points, whereas the number of grid points for the ALE calculation was determined algorithmically such that ten data points fall in each interval vetween two adjacent grid points.
+SHAP was calculated on 200 data points radomly sampled from the $10^{5}$ data points used for PDP and ALE.
+
+|<img src="./img/runtimes.png" alt="drawing" width="400"/>|
+|:--:|
+|*Runtimes of the methods PDP, ALE and SHAP during a single evaluation step at every $10^{5}$ time steps. The runtimes were measured during multiple training runs with the same settings.*|
+
+
 
 ### Bibliography
 
