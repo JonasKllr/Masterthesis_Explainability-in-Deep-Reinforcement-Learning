@@ -48,6 +48,8 @@ Furthermore, the incremental PDP (iPDP) [2], an adaption of the PDP to dynamic m
 The aim was to investigate, how the importance of the individual feautres for the agent's decisions changed over time with a progressing training process.
 
 A decision tree was applied post-hoc as a surrogate model to the agent to investigate, if this method can provide further explanations about the agent's policy.
+Therefore, the tree was trained on $10^{5}$ states and the agent's actions calculated on these states.
+A decision tree with a maximal depth of six was considered to be the cut-off before the tree itself turn into a black-box model.
 
 ## Results
 
@@ -96,9 +98,17 @@ SHAP was calculated on 200 data points radomly sampled from the $10^{5}$ data po
 |Runtimes of the methods PDP, ALE and SHAP during a single evaluation step at every $10^{5}$ time steps. The runtimes were measured during three training runs with the same settings.|
 
 ## Surrogate Model
+
+|Depth|MAE training [-]|MSE training [-]|MAE test [-]|MSE test [-]|
+|:---:|:---:|:---:|:---:|:---:|
+|3|0.585|0.445|0.586|0.447|
+|4|0.584|0.445|0.586|0.447|
+|5|0.584|0.444|0.586|0.448|
+|6|0.583|0.443|0.586|0.448|
+
 ## Conclusion
 
-### Bibliography
+## Bibliography
 
 [1] Hart, Fabian, Martin Waltz and Ostap Okhrin: Missing Velocity in Dynamic Obstacle Avoidance based on Deep Reinforcement Learning. arXiv preprint arXiv:2112.12465, 2021.
 
