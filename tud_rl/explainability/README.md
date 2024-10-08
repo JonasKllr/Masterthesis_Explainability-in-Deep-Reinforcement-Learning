@@ -23,7 +23,7 @@ The agent's aim was to pass in between the obstacles. [1]
 
 |<img src="./img/env.png" alt="drawing" width="300"/>|
 |:--:|
-|*Obstacle avoidance environment taken from [1].*|
+|Obstacle avoidance environment taken from [1].|
 
 The state was represented by six features:
 $$s_{t} =\left(\begin{array}{c}
@@ -89,7 +89,7 @@ SHAP was calculated on 200 data points radomly sampled from the $10^{5}$ data po
 
 |<img src="./img/runtimes.png" alt="drawing" width="500"/>|
 |:--:|
-|*Runtimes of the methods PDP, ALE and SHAP during a single evaluation step at every $10^{5}$ time steps. The runtimes were measured during multiple training runs with the same settings.*|
+|Runtimes of the methods PDP, ALE and SHAP during a single evaluation step at every $10^{5}$ time steps. The runtimes were measured during three training runs with the same settings.|
 
 
 
