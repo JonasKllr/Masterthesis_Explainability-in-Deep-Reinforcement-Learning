@@ -116,8 +116,16 @@ Therefore, the agent was applied in those envornments and the agent's actions we
 
 <table>
   <tr>
-    <td style="text-align: center;"><img src="./img/agent_vs_tree_1.png" alt="drawing" width="400"/></td>
-    <td style="text-align: center;"><img src="./img/agent_vs_tree_2.png" alt="drawing" width="400"/></td>
+    <td>
+      <div align="center">
+        <img src="./img/agent_vs_tree_1.png" alt="drawing" width="400"/>
+      </div>
+    </td>
+    <td>
+      <div align="center">
+        <img src="./img/agent_vs_tree_2.png" alt="drawing" width="400"/>
+      </div>
+    </td>
   </tr>
   <tr>
     <td colspan="2">
