@@ -7,8 +7,7 @@ The applications of the methods during the agent's training are in [train_contin
 With the combination of Reinforcement Learning (RL) and Artificial Neural Networks, Deep Reinforcement Learning (DRL) agents are shifted towards being non-interpretable black-box models.
 Developers of DRL agents, however, could benefit from enhanced interpretability of the agents' behavior, especially during the training process.
 Improved interpretability  could enable developers to make informed adaptations, leading to better overall performance.
-The explainability methods Partial Dependence Plot (PDP), Accumulated Local Effects (ALE) and SHapley Additive ex-
-Planations (SHAP) were considered to provide insights into how an agent's  behavior evolves during training.
+The explainability methods Partial Dependence Plot (PDP) [1], Accumulated Local Effects (ALE) [2] and SHapley Additive exPlanations (SHAP) [3] were considered to provide insights into how an agent's  behavior evolves during training.
 Additionally, a decision tree as a surrogate model was considered to enhance the interpretability of a trained agent.
 In a case study, the methods were tested on a Deep Deterministic Policy Gradient (DDPG) agent that was trained in an obstacle avoidance scenario.
 PDP, ALE and SHAP were evaluated towards their ability to provide explanations as well as the feasibility of their application in terms of computational overhead.
@@ -19,38 +18,36 @@ However, the decision tree failed to approximate the agent's actions effectively
 
 ## Case Study: Obstacle Avoidance
 The RL agent was trained in a simple two-dimensional environment consisting of two moving obstacles with a constant distance relative to each other.
-The agent's aim was to pass in between the obstacles. [1]
+The agent's aim was to pass in between the obstacles. [4]
 
 |<img src="./img/env.png" alt="drawing" width="300"/>|
 |:--:|
-|Obstacle avoidance environment taken from [1].|
+|Obstacle avoidance environment taken from [4].|
 
 The state was represented by six features:
-$$s_{t} =\left(\begin{array}{c}
-		\frac{\ddot{y}_{t,agent}}{a_{y,max}} \\
-		\frac{\dot{y}_{t,agent}}{v_{y,max}} \\
-		\frac{\dot{x}_{t,agent}-\dot{x_{t,i}}}{v_{x,max}} \\
-		\frac{\dot{y}_{t,agent}-\dot{y_{t,i}}}{v_{y,max}} \\
-		\frac{x_{t,agent}-x_{t,i}}{x_{scale}} \\
-		\frac{y_{t,agent}-y_{t,i}}{y_{scale}}
-	\end{array}
-	\right)$$
+
+<img src="./img/formula_state.png" alt="drawing" width="450"/>
+
 
 Based on the state representation, the agent computed an action $a_{t} \in [-1,1]$.
 This action was then mapped to the agent's acceleration in lateral direction:
-$$\ddot{y}_{t+1,agent} = \ddot{y}_{t,agent} + \Delta a_{y,max} \cdot a_{t}$$
+
+<img src="./img/formula_action.png" alt="drawing" width="350"/>
 
 
 The DRL agent was trained for $4 \cdot 10^{6}$ time steps.
 During the training, the above mentioned explainability methods PDP, ALE and SHAP where applied with a frequency of $10^{5}$ time steps.
 At each evaluation step, the states encountered by the agent in the the previous $10^{5}$ time steps were used as the data set for the calcualtion of the explainability methods.
-Furthermore, the incremental PDP (iPDP) [2], an adaption of the PDP to dynamic modeling scearios, was applied at every time step.
+Furthermore, the incremental PDP (iPDP) [5], an adaption of the PDP to dynamic modeling scearios, was applied at every time step.
 The aim was to investigate, how the importance of the individual feautres for the agent's decisions changed over time with a progressing training process.
 
 <!-- formula feature importance -->
-The feautre importance based on the PDP and ALE was calculated based on the motivation that "any [feature] for which the PDP is "flat" is likely to be less important than those [features] whose PDP varies across a wider range of the response" [PDP_feature-importance]:
+The feautre importance based on the PDP and ALE was calculated based on the motivation that "any [feature] for which the PDP is "flat" is likely to be less important than those [features] whose PDP varies across a wider range of the response" [6]:
 
-$$I\left( x_{S} \right) = \sqrt{\frac{1}{K-1} \sum_{k=1}^{K} \left( \hat{f}_S \left( x_{S}^{(k)}\right) - \frac{1}{K} \sum_{k=1}^{K} \hat{f}_{S} \left( x_{S}^{(k)}\right) \right) ^{2} }$$
+<img src="./img/formula_feature-importance.png" alt="drawing" width="400"/>
+
+
+The feautre importance based on the SHAP values was determined by calculating the average absolute Shapley value across the whole data set [7].
 
 A decision tree was applied post-hoc as a surrogate model to the agent to investigate, if this method can provide further explanations about the agent's policy.
 Therefore, the tree was trained on $10^{5}$ states and the agent's actions calculated on these states.
@@ -157,34 +154,24 @@ Therefore, the results of the SHAP method might be less reliable than the result
 PDP and ALE.
 
 The decision tree was not able to approximate the agent's actions well enough to provide further explanations as a surrogate model.
-Linear model trees showed more promising results and could be applied in further studies [3].
+Linear model trees showed more promising results and could be applied in further studies [8].
 
 ## Bibliography
 
-[1] Hart, Fabian, Martin Waltz and Ostap Okhrin: Missing Velocity in Dynamic Obstacle Avoidance based on Deep Reinforcement Learning. arXiv preprint arXiv:2112.12465, 2021.
+[1] Friedman, Jerome H: Greedy function approximation: a gradient boosting machine. Annals of statistics, pages 1189–1232, 2001.
 
-[2] Muschalik, Maximilian, Fabian Fumagalli, Rohit Jagtani, Barbara
-Hammer and Eyke Hüllermeier: iPDP: On Partial Dependence Plots in Dy-
-namic Modeling Scenarios. In World Conference on Explainable Artificial Intelli-
-gence, pages 177–194. Springer, 2023.
+[2] Apley, Daniel W and Jingyu Zhu: Visualizing the effects of predictor variables in black box supervised learning models. Journal of the Royal Statistical Society Series B: Statistical Methodology, 82(4):1059–1086, 2020.
 
-[3] Gjærum, Vilde B, Inga Strümke, Jakob Løver, Timothy Miller and
-Anastasios M Lekkas: Model tree methods for explaining deep reinforcement
-learning agents in real-time robotic applications. Neurocomputing, 515:133–144,
-2023.
+[3] Lundberg, Scott M and Su-In Lee: A unified approach to interpreting model predictions. Advances in neural information processing systems, 30, 2017.
 
-[PDP] Friedman, Jerome H: Greedy function approximation: a gradient boosting ma-
-chine. Annals of statistics, pages 1189–1232, 2001.
+[4] Hart, Fabian, Martin Waltz and Ostap Okhrin: Missing Velocity in Dynamic Obstacle Avoidance based on Deep Reinforcement Learning. arXiv preprint arXiv:2112.12465, 2021.
 
-[ALE] Apley, Daniel W and Jingyu Zhu: Visualizing the effects of predictor variables
-in black box supervised learning models. Journal of the Royal Statistical Society
-Series B: Statistical Methodology, 82(4):1059–1086, 2020.
+[5] Muschalik, Maximilian, Fabian Fumagalli, Rohit Jagtani, Barbara Hammer and Eyke Hüllermeier: iPDP: On Partial Dependence Plots in Dynamic Modeling Scenarios. In World Conference on Explainable Artificial Intelligence, pages 177–194. Springer, 2023.
 
-[SHAP] Lundberg, Scott M and Su-In Lee: A unified approach to interpreting model
-predictions. Advances in neural information processing systems, 30, 2017.
+[6] Greenwell, Brandon M, Bradley C Boehmke and Andrew J McCarthy: A simple and effective model-based variable importance measure. arXiv preprint arXiv:1805.04755, 2018.
 
-[PDP_feature-importance] Greenwell, Brandon M, Bradley C Boehmke and Andrew J McCarthy:
-A simple and effective model-based variable importance measure. arXiv preprint
-arXiv:1805.04755, 2018.
+[7] Lundberg, Scott M, Gabriel Erion, Hugh Chen, Alex DeGrave, Jordan M Prutkin, Bala Nair, Ronit Katz, Jonathan Himmelfarb, Nisha Bansal and Su-In Lee: From local explanations to global understanding with explainable AI for trees. Nature machine intelligence, 2(1):56–67, 2020.
+
+[8] Gjærum, Vilde B, Inga Strümke, Jakob Løver, Timothy Miller and Anastasios M Lekkas: Model tree methods for explaining deep reinforcement learning agents in real-time robotic applications. Neurocomputing, 515:133–144, 2023.
 
 Molnar, Christoph: Interpretable Machine Learning. 2 edition, 2022.
