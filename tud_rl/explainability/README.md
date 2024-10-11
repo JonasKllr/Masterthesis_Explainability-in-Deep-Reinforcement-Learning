@@ -47,6 +47,11 @@ At each evaluation step, the states encountered by the agent in the the previous
 Furthermore, the incremental PDP (iPDP) [2], an adaption of the PDP to dynamic modeling scearios, was applied at every time step.
 The aim was to investigate, how the importance of the individual feautres for the agent's decisions changed over time with a progressing training process.
 
+<!-- formula feature importance -->
+The feautre importance based on the PDP and ALE was calculated based on the motivation that "any [feature] for which the PDP is "flat" is likely to be less important than those [features] whose PDP varies across a wider range of the response" [PDP_feature-importance]:
+
+$$I\left( x_{S} \right) = \sqrt{\frac{1}{K-1} \sum_{k=1}^{K} \left( \hat{f}_S \left( x_{S}^{(k)}\right) - \frac{1}{K} \sum_{k=1}^{K} \hat{f}_{S} \left( x_{S}^{(k)}\right) \right) ^{2} }$$
+
 A decision tree was applied post-hoc as a surrogate model to the agent to investigate, if this method can provide further explanations about the agent's policy.
 Therefore, the tree was trained on $10^{5}$ states and the agent's actions calculated on these states.
 A decision tree with a maximal depth of six was considered to be the cut-off before the tree itself turn into a black-box model.
@@ -134,7 +139,25 @@ Therefore, the agent was applied in those envornments and the agent's actions we
   </tr>
 </table>
 
+
 ## Conclusion
+
+The methods applied during the training were able to provide explanations about the
+individual features’ influence on the agent’s actions.
+The PDP adds plots with a simple and clear interpretation.
+However, the grid resolution had to be small to limit the computational overhead.
+The ALE could be computed at a much higher grid resolution with a computational overhead in the same range as the PDP. 
+Therefore, the influence of the individual features are visualized more detailed.
+Additionally, the ALE method accounts for correlations between features while the PDP might be influenced by them.
+The SHAP method added more detailed insights about the influence of the individual features than the previous methods.
+Instead of averages, values for individual data points are visualized.
+This can reveal if trends found by the previous methods are actually present or if they resulted from averaging over predictions without any trend.
+However, as a result of a large computational overhead, the SHAP method was calculated only for 200 data points instead of $10^{5}$ data points used by the other methods.
+Therefore, the results of the SHAP method might be less reliable than the results of
+PDP and ALE.
+
+The decision tree was not able to approximate the agent's actions well enough to provide further explanations as a surrogate model.
+Linear model trees showed more promising results and could be applied in further studies [3].
 
 ## Bibliography
 
@@ -144,3 +167,24 @@ Therefore, the agent was applied in those envornments and the agent's actions we
 Hammer and Eyke Hüllermeier: iPDP: On Partial Dependence Plots in Dy-
 namic Modeling Scenarios. In World Conference on Explainable Artificial Intelli-
 gence, pages 177–194. Springer, 2023.
+
+[3] Gjærum, Vilde B, Inga Strümke, Jakob Løver, Timothy Miller and
+Anastasios M Lekkas: Model tree methods for explaining deep reinforcement
+learning agents in real-time robotic applications. Neurocomputing, 515:133–144,
+2023.
+
+[PDP] Friedman, Jerome H: Greedy function approximation: a gradient boosting ma-
+chine. Annals of statistics, pages 1189–1232, 2001.
+
+[ALE] Apley, Daniel W and Jingyu Zhu: Visualizing the effects of predictor variables
+in black box supervised learning models. Journal of the Royal Statistical Society
+Series B: Statistical Methodology, 82(4):1059–1086, 2020.
+
+[SHAP] Lundberg, Scott M and Su-In Lee: A unified approach to interpreting model
+predictions. Advances in neural information processing systems, 30, 2017.
+
+[PDP_feature-importance] Greenwell, Brandon M, Bradley C Boehmke and Andrew J McCarthy:
+A simple and effective model-based variable importance measure. arXiv preprint
+arXiv:1805.04755, 2018.
+
+Molnar, Christoph: Interpretable Machine Learning. 2 edition, 2022.
