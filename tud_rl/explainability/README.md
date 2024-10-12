@@ -86,7 +86,7 @@ PDP, ALE and SHAP produced similar results in terms of feature importance of the
 <br>
 <!-- true computational costs -->
 The application of the explainability add computational costs to the agent's training process.
-SHAP introduces by far the highest computational costs, followed by PDP.
+In general, SHAP introduces by far the highest computational costs, followed by PDP.
 Compared to the other methods, ALE introduces the lowest computational costs.
 
 <!-- computational costs here -->
@@ -94,10 +94,11 @@ The methods were applied in a way to address for the trade-off between reliable 
 At each evaluation step during the training, PDP and ALE were both calculated with the same set of $10^{5}$ data points.
 The PDP was calculated for five grid points, whereas the number of grid points for the ALE calculation was determined algorithmically such that ten data points fall in each interval vetween two adjacent grid points.
 SHAP was calculated on 200 data points radomly sampled from the $10^{5}$ data points used for PDP and ALE.
+The training skripts were executed on the TU Dresden's HPC system Bernard where ten CPU cores were allocated.
 
 |<img src="./img/runtimes.png" alt="drawing" width="500"/>|
 |:--:|
-|Runtimes of the methods PDP, ALE and SHAP during a single evaluation step at every $10^{5}$ time steps. The runtimes were measured during three training runs with the same settings.|
+|Runtimes of the methods PDP, ALE and SHAP during a single evaluation step at every $10^{5}$ time steps. The runtimes were measured during three training runs with the same settings. The trainings were exectured on the TU Dresden's HPC system Bernard where ten CPU cores were allocated.|
 
 ### Surrogate Model
 
