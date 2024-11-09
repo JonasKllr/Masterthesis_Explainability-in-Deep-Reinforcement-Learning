@@ -3,6 +3,8 @@
 This folder contains the helper scripts that were applied in the project.
 The applications of the methods during the agent's training are in [train_continuos_explainer.py](../run/train_continuous_explainer.py) and [train_continuos_iPDP.py](../run/train_continuous_iPDP.py).
 
+The full text to the thesis can be found [here](https://tud.qucosa.de/landing-page/?tx_dlf[id]=https%3A%2F%2Ftud.qucosa.de%2Fapi%2Fqucosa%253A93844%2Fmets).
+
 ## Abstract
 With the combination of Reinforcement Learning (RL) and Artificial Neural Networks, Deep Reinforcement Learning (DRL) agents are shifted towards being non-interpretable black-box models.
 Developers of DRL agents, however, could benefit from enhanced interpretability of the agents' behavior, especially during the training process.
